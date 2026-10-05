@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>中西文自动间距</title><link rel="stylesheet" href="ui.css"></head>
+<body class="popup" data-view="popup">
+  <main>
+    <header><p class="eyebrow">AUTO SPACE</p><h1>中西文自动间距</h1></header>
+    <label class="global"><span>全局自动间距</span><input id="enabled" type="checkbox" role="switch"></label>
+    <section aria-labelledby="site-heading"><h2 id="site-heading">当前网站</h2><p id="host" class="host">正在读取……</p>
+      <fieldset id="site-mode" class="segmented"><legend class="sr-only">本站自动间距</legend>
+        <label><input type="radio" name="site-mode" value="inherit"><span>跟随全局</span></label>
+        <label><input type="radio" name="site-mode" value="on"><span>开启</span></label>
+        <label><input type="radio" name="site-mode" value="off"><span>关闭</span></label>
+      </fieldset>
+      <p id="effective" class="hint"></p>
+    </section>
+    <p id="status" role="status" aria-live="polite"></p><p id="unsupported" class="hint" hidden>当前浏览器尚不支持 text-autospace，请更新浏览器。</p>
+    <button id="open-options" class="secondary" type="button">管理所有网站设置 <span aria-hidden="true">↗</span></button>
+  </main><script src="shared.js"></script><script src="ui.js"></script>
+</body></html>

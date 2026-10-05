@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>中西文自动间距 · 设置</title><link rel="stylesheet" href="ui.css"></head>
+<body data-view="options">
+  <main>
+    <header><p class="eyebrow">AUTO SPACE</p><h1>中西文自动间距</h1><p class="intro">用浏览器原生排版，为中文与西文、数字之间留出自然间距。</p></header>
+    <form id="settings-form">
+      <section><label class="global"><span><strong>全局自动间距</strong><small>网站规则可以单独覆盖全局开关。</small></span><input id="enabled" type="checkbox" role="switch"></label>
+        <p class="preview">中文与 English、数字 2026 自然衔接。</p>
+      </section>
+      <section aria-labelledby="rules-heading"><div class="section-heading"><h2 id="rules-heading">网站设置</h2><button id="add-rule" type="button" class="secondary">添加网站</button></div>
+        <p class="hint">域名同时匹配主域名和子域名；更具体的域名优先。填写端口时仅匹配该端口。</p>
+        <div id="rules"></div><p id="empty" class="empty">尚未设置例外，所有网站跟随全局。</p>
+      </section>
+      <footer><p id="status" role="status" aria-live="polite"></p><button id="save" type="submit">保存设置</button></footer>
+    </form>
+    <p id="unsupported" class="hint" hidden>当前浏览器尚不支持 text-autospace，请更新浏览器。</p>
+    <p class="hint">“关闭”会移除此扩展的间距样式，恢复网站自身的设置。配置仅保存在当前浏览器中。</p>
+  </main>
+  <template id="rule-template"><div class="rule">
+    <div class="rule-top"><label>域名<input class="domain" type="text" placeholder="example.com" autocomplete="off" spellcheck="false" required></label><button type="button" class="delete secondary" aria-label="删除网站规则">删除</button></div>
+    <fieldset class="segmented"><legend class="sr-only">本站自动间距</legend>
+      <label><input type="radio" value="inherit"><span>跟随全局</span></label><label><input type="radio" value="on"><span>开启</span></label><label><input type="radio" value="off"><span>关闭</span></label>
+    </fieldset>
+  </div></template>
+  <script src="shared.js"></script><script src="ui.js"></script>
+</body></html>

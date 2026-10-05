@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "中西文自动间距",
+  "version": "1.0.0",
+  "description": "全局启用浏览器原生中西文自动间距，支持单个网站覆盖设置。",
+  "permissions": ["storage", "scripting", "activeTab"],
+  "host_permissions": ["<all_urls>"],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [{ "matches": ["<all_urls>"], "js": ["content.js"], "run_at": "document_start", "all_frames": true, "match_about_blank": true }],
+  "action": { "default_title": "中西文自动间距", "default_popup": "popup.html", "default_icon": {"16":"icons/icon-16.png","32":"icons/icon-32.png"} },
+  "options_ui": { "page": "options.html", "open_in_tab": true },
+  "icons": {"16":"icons/icon-16.png","32":"icons/icon-32.png","48":"icons/icon-48.png","128":"icons/icon-128.png"},
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAiJnsot98Ur9H8tG4qwwrQXVU2LYq/bmfxbqp/faLpGjGYr7mdhyC+OTnFU8KSrg8dC5ireNohxZupWteNnQslWaGIoKJiofB1rbTU1Juhe0IHg28FiISAkXX2C9UV14rda9xbTjRTZBpO0I5a7STxFTPPQgL3mzo6XCJKPdRid+ZUv0HrzIrdwi4d3Ce0jja25SdXSCLlYShMRu50PnwDtG0Qwucl5zNVqppXx8mwCSCjSzPX4GIHxhd9t5GGDekWL2c3fc0OOTfTD97AWtuRoJtWPQJox4Dxqf0Xk2k2YF+GAIlyiHwEf51yYUih+VD+HS9Q0gH9S4akK0iSu5fzwIDAQAB"
+}
