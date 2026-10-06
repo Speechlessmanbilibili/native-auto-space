@@ -8,6 +8,8 @@
 
 从 [GitHub Release](https://github.com/Speechlessmanbilibili/native-auto-space/releases/latest) 下载版本 ZIP，拖入 Chrome/Edge 扩展管理页安装。需要浏览器支持 `text-autospace`；不支持时，设置页会提示更新浏览器。浏览器内部页和扩展商店等限制页面无法注入。本地文件需要在扩展管理页允许访问文件网址。
 
+固定扩展 ID 为 `hciemeeoeagloegjphmccjmhlmdhjkfa`。更新时拖入新版 ZIP，覆盖原扩展并沿用已有设置。
+
 按全局与站点规则预注册 CSS，浏览器在 `document_start` 提前加载。匿名样式层覆盖网页样式表中的高权重及分层重要声明；行内 `!important` 在后台 USER 样式完成后覆盖。后台重启时复用页面已确认的注入状态，保留后来加入的同权重 USER 样式顺序。
 
 关闭时，通过根元素开关停用提前样式，并移除用户样式，恢复网站原有间距；网页重建根元素后继续保持关闭。动态节点、普通 DOM 中的伪元素和占位文字直接受 CSS 覆盖，文字中不添加实际空格。Shadow DOM 内部元素按自身样式和宿主传入的继承值排版。每个网页框架按自身地址匹配规则；空白、`srcdoc`、`blob` 和 `data` 框架沿用创建来源的域名和端口。
