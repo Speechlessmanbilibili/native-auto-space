@@ -129,6 +129,38 @@ test("受限制页面仍能设置全局，本站设置停用且不报错", async
   await page.close();
 });
 
+test("页面仅报告完成的 USER 样式状态，排队、失败及过时回复不会复用旧确认", async () => {
+  const page = await browser.newPage();
+  try {
+    await page.goto(origin + "/content-harness");
+    await page.evaluate(() => {
+      window.__requests = [];
+      window.chrome = {
+        runtime: { sendMessage: message => new Promise((resolve, reject) => __requests.push({ message, resolve, reject })) },
+        storage: { onChanged: { addListener(listener) { window.__change = listener; } } }
+      };
+      window.__settingsChanged = enabled => __change({ settings: { newValue: { enabled, siteRules: [] } } }, "local");
+    });
+    await page.addScriptTag({ path: path.join(root, "shared.js") });
+    await page.addScriptTag({ path: path.join(root, "content.js") });
+    assert.equal(await page.evaluate(() => __requests[0].message.userStyle), null);
+    await page.evaluate(() => __requests[0].resolve({ enabled: true }));
+    await page.evaluate(() => __settingsChanged(true));
+    assert.equal(await page.evaluate(() => __requests[1].message.userStyle), true);
+    await page.evaluate(() => __settingsChanged(false));
+    assert.equal(await page.evaluate(() => __requests[2].message.userStyle), null);
+    await page.evaluate(() => { __requests[1].resolve({ enabled: true }); __requests[2].reject(new Error("后台停止")); });
+    await page.evaluate(() => __settingsChanged(true));
+    assert.equal(await page.evaluate(() => __requests[3].message.userStyle), null);
+    await page.evaluate(() => __requests[3].resolve({ enabled: false }));
+    await page.evaluate(() => __settingsChanged(true));
+    assert.equal(await page.evaluate(() => __requests[4].message.userStyle), false);
+    await page.evaluate(() => __requests[4].resolve({ enabled: true }));
+    await page.evaluate(() => __settingsChanged(true));
+    assert.equal(await page.evaluate(() => __requests[5].message.userStyle), true);
+  } finally { await page.close(); }
+});
+
 test("真实 MV3 注入覆盖网页重要声明，动态内容、框架及实时设置正确", async t => {
   const context = await chromium.launchPersistentContext("", { headless: true, executablePath,
     args: ["--disable-extensions-except=" + root, "--load-extension=" + root] });

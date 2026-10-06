@@ -152,8 +152,8 @@ function environment(initialSettings = enabledSettings(true)) {
     return {
       message,
       async sync() { assert.deepEqual(await message({ type: "auto-space-registration-sync" }), { ok: true }); },
-      apply({ initial = false, ...sender } = {}) {
-        return message({ type: "auto-space-apply", initial }, {
+      apply({ initial = false, userStyle = null, ...sender } = {}) {
+        return message({ type: "auto-space-apply", initial, userStyle }, {
           tab: { id: 7 }, documentId: "document-a", frameId: 0,
           url: "https://example.com/page", origin: "https://example.com", ...sender
         });
@@ -378,6 +378,18 @@ test("后台在开启时重启后仍只保留一份 USER 样式，再关闭时�
   const originalInjection = env.cssCalls()[0].value;
   for (const call of env.cssCalls()) assert.deepEqual(call.value, originalInjection);
   await restartedWorker.sync(); env.assertClean();
+});
+
+test("后台重启复用页面已确认的 USER 样式，保持原注入顺序并正常关闭", async () => {
+  const env = environment(), originalWorker = env.startWorker();
+  await originalWorker.sync(); await originalWorker.apply({ initial: true });
+  const restartedWorker = env.startWorker(); await restartedWorker.sync();
+  assert.deepEqual(await restartedWorker.apply({ userStyle: true }), { enabled: true });
+  assert.deepEqual(env.cssCalls().map(call => call.method), ["insertCSS"]);
+  restartedWorker.changeSettings(enabledSettings(false));
+  assert.deepEqual(await restartedWorker.apply({ userStyle: true }), { enabled: false });
+  assert.deepEqual(env.cssCalls().map(call => call.method), ["insertCSS", "removeCSS"]);
+  assert.equal(env.sheets.size, 0); await restartedWorker.sync(); env.assertClean();
 });
 
 test("首次关闭的全新文档不额外移除样式，非首次关闭仍主动清理", async () => {

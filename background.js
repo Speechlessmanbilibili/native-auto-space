@@ -52,7 +52,8 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
     do {
       version = revision;
       state = AutoSpace.resolve(settings, address);
-      const previous = applied.get(key);
+      // 页面只报告已完成且没有后续未确认操作的样式状态；后台休眠后可复用旧注入顺序。
+      const previous = applied.get(key) || (typeof message.userStyle === "boolean" ? { enabled: message.userStyle } : null);
       // 首次添加直接注入；相同配置复用样式，后台重启后的关闭请求仍清理旧样式。
       if (state.enabled) {
         if (!previous?.enabled) {

@@ -164,6 +164,48 @@ test("重复应用不会压制用户或其他扩展后来提供的同等权重 U
     await page.close();
   }
 });
+test("后台真正停止再唤醒后，无关设置更新保留后来 USER 声明的顺序", { timeout: 10000 }, async t => {
+  await settings({ enabled: true, siteRules: [] });
+  const page = await opened("example.com", port, "inline");
+  const control = await context.newPage();
+  const css = "* { text-autospace: no-autospace !important; }";
+  let session, tabId;
+  try {
+    await page.waitForFunction(() => getComputedStyle(t).textAutospace === "normal");
+    tabId = await worker.evaluate(async ({ url, css }) => {
+      const tab = (await chrome.tabs.query({})).find(tab => tab.url === url);
+      await chrome.scripting.insertCSS({ target: { tabId: tab.id }, css, origin: "USER" });
+      return tab.id;
+    }, { url: page.url(), css });
+    assert.equal(await page.locator("#t").evaluate(node => getComputedStyle(node).textAutospace), "no-autospace");
+    await control.goto(new URL("options.html", worker.url()).href);
+    session = await context.newCDPSession(control);
+    await session.send("ServiceWorker.enable");
+    const stopped = new Promise(resolve => session.on("ServiceWorker.workerVersionUpdated", event => {
+      if (event.versions.some(version => version.scriptURL.endsWith("/background.js") && version.runningStatus === "stopped")) resolve();
+    }));
+    await session.send("ServiceWorker.stopAllWorkers"); await stopped;
+    await control.evaluate(() => chrome.runtime.sendMessage({ type: "auto-space-registration-sync" }));
+    assert.equal(await worker.evaluate(() => applied.size), 0, "唤醒后必须重新建立文档内存状态");
+    await settings({ enabled: true, siteRules: [{ domain: "example.net", mode: "off" }] });
+    await worker.evaluate(async () => {
+      const deadline = performance.now() + 5000;
+      while ((!applied.size || pending.size) && performance.now() < deadline) await new Promise(resolve => setTimeout(resolve, 10));
+      if (!applied.size || pending.size) throw new Error("现有页面没有完成重新核对");
+    });
+    assert.equal(await page.locator("#t").evaluate(node => getComputedStyle(node).textAutospace), "no-autospace");
+    t.diagnostic("真实后台停止后，已确认 USER 注入保持原有级联顺序。");
+    await worker.evaluate(({ tabId, css }) => chrome.scripting.removeCSS({ target: { tabId }, css, origin: "USER" }), { tabId, css });
+    tabId = undefined;
+    assert.equal(await page.locator("#t").evaluate(node => getComputedStyle(node).textAutospace), "normal");
+    await settings({ enabled: false, siteRules: [] });
+    await page.waitForFunction(() => getComputedStyle(t).textAutospace === "no-autospace");
+  } finally {
+    if (tabId !== undefined) await worker.evaluate(({ tabId, css }) => chrome.scripting.removeCSS({ target: { tabId }, css, origin: "USER" }), { tabId, css }).catch(() => {});
+    await session?.detach(); await control.close(); await page.close();
+  }
+});
+
 test("记录网页离散过渡的浏览器行为，不以禁止全站动画伪造覆盖保证", async t => {
   await settings({ enabled: false, siteRules: [] });
   const page = await opened("example.com", port, "inline");
