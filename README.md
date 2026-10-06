@@ -8,7 +8,7 @@
 
 从 [GitHub Release](https://github.com/Speechlessmanbilibili/native-auto-space/releases/latest) 下载版本 ZIP，拖入 Chrome/Edge 扩展管理页安装。需要浏览器支持 `text-autospace`；不支持时，设置页会提示更新浏览器。浏览器内部页和扩展商店等限制页面无法注入。本地文件需要在扩展管理页允许访问文件网址。
 
-通过 `chrome.scripting` 以用户样式优先级注入一条 CSS。动态节点直接受 CSS 覆盖，不遍历页面、不采样字体、不观察 DOM 或鼠标/输入事件，也不添加实际空格。普通 DOM 中的伪元素和占位文字一并覆盖；Shadow DOM 内部元素不保证覆盖。每个普通网页框架根据自身地址匹配规则。
+按全局与站点规则预注册 CSS，浏览器在 `document_start` 提前加载；后台随后以用户样式优先级应用同一间距设置。关闭时，通过根元素开关停用已加载的提前样式，并移除用户样式，恢复网站原有间距。动态节点、普通 DOM 中的伪元素和占位文字直接受 CSS 覆盖，文字中不添加实际空格。Shadow DOM 内部元素不保证覆盖。每个网页框架按自身地址匹配规则；`about:blank` 和 `srcdoc` 框架沿用创建页面的来源。
 
 配置使用 `chrome.storage.local`，仅保存在当前浏览器中，不上传、不同步浏览记录或页面内容。可与字体替换扩展分别安装；它的全局间距规则独立生效。
 

@@ -5,7 +5,7 @@ if (-not $OutputDirectory) { $OutputDirectory = Join-Path $PSScriptRoot 'dist' }
 $taskManifest = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'manifest.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 $taskVersion = $taskManifest.version
 if ($taskVersion -notmatch '^\d+\.\d+\.\d+(?:\.\d+)?$') { throw 'manifest 版本无效。' }
-$taskNames = @('manifest.json', 'shared.js', 'content.js', 'background.js', 'popup.html', 'options.html', 'ui.js', 'ui.css', 'icons', 'README.md', 'CHANGELOG.md', 'PRIVACY.md', 'LICENSE')
+$taskNames = @('manifest.json', 'shared.js', 'content.js', 'background.js', 'early.css', 'popup.html', 'options.html', 'ui.js', 'ui.css', 'icons', 'README.md', 'CHANGELOG.md', 'PRIVACY.md', 'LICENSE')
 $taskOutput = [System.IO.Path]::GetFullPath($OutputDirectory)
 New-Item -ItemType Directory -Path $taskOutput -Force | Out-Null
 $taskZip = Join-Path $taskOutput "native-auto-space-v$taskVersion.zip"

@@ -1,0 +1,11 @@
+/* 提前注册的首屏样式；关闭时通过根元素开关恢复网站自身的间距声明。 */
+:root:not([data-native-auto-space-off]),
+:root:not([data-native-auto-space-off]) *,
+:root:not([data-native-auto-space-off])::before,
+:root:not([data-native-auto-space-off])::after,
+:root:not([data-native-auto-space-off])::placeholder,
+:root:not([data-native-auto-space-off]) ::before,
+:root:not([data-native-auto-space-off]) ::after,
+:root:not([data-native-auto-space-off]) ::placeholder {
+  text-autospace: normal !important;
+}

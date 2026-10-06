@@ -5,7 +5,13 @@
   let settings = normalize(), saved = "", ruleId = 0, url = null;
   const status = text => { $("#status").textContent = text; };
   const read = async () => normalize((await chrome.storage.local.get("settings")).settings);
-  const write = async value => { await chrome.storage.local.set({ settings: value }); settings = value; };
+  const write = async value => {
+    await chrome.storage.local.set({ settings: value }); settings = value;
+    if (typeof chrome.runtime.sendMessage === "function") {
+      const result = await chrome.runtime.sendMessage({ type: "auto-space-registration-sync" });
+      if (result?.error) throw new Error(result.error);
+    }
+  };
   $("#unsupported").hidden = CSS.supports("text-autospace", "normal");
 
   function addRule(rule = { domain: "", mode: "inherit" }, focus = false) {

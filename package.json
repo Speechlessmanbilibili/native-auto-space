@@ -1,6 +1,6 @@
 {
   "name": "native-auto-space",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "scripts": { "test": "node --test tests/*.test.cjs", "build": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./build-release.ps1" },
   "devDependencies": { "playwright": "1.62.1" }
