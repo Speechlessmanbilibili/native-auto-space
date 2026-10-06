@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
 const http = require("node:http");
-const { chromium } = require("playwright");
+const { chromium, executablePath } = require("./browser.cjs");
 const root = path.resolve(__dirname, "..");
 const sandbox = { URL };
 vm.runInNewContext(fs.readFileSync(path.join(root, "shared.js"), "utf8"), sandbox);
@@ -20,7 +20,7 @@ before(async () => {
   });
   await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
   origin = "http://127.0.0.1:" + server.address().port;
-  browser = await chromium.launch({ headless: true });
+  browser = await chromium.launch({ headless: true, executablePath });
 });
 after(async () => { await browser?.close(); if (server) await new Promise(resolve => server.close(resolve)); });
 
@@ -130,7 +130,7 @@ test("受限制页面仍能设置全局，本站设置停用且不报错", async
 });
 
 test("真实 MV3 注入覆盖网页重要声明，动态内容、框架及实时设置正确", async t => {
-  const context = await chromium.launchPersistentContext("", { headless: true, executablePath: chromium.executablePath(),
+  const context = await chromium.launchPersistentContext("", { headless: true, executablePath,
     args: ["--disable-extensions-except=" + root, "--load-extension=" + root] });
   try {
     const worker = context.serviceWorkers()[0] || await context.waitForEvent("serviceworker");

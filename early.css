@@ -1,11 +1,16 @@
-/* 提前注册的首屏样式；关闭时通过根元素开关恢复网站自身的间距声明。 */
-:root:not([data-native-auto-space-off]),
-:root:not([data-native-auto-space-off]) *,
-:root:not([data-native-auto-space-off])::before,
-:root:not([data-native-auto-space-off])::after,
-:root:not([data-native-auto-space-off])::placeholder,
-:root:not([data-native-auto-space-off]) ::before,
-:root:not([data-native-auto-space-off]) ::after,
-:root:not([data-native-auto-space-off]) ::placeholder {
-  text-autospace: normal !important;
+/* 注册样式属于 AUTHOR 来源。匿名层先于网页样式层建立，重要声明的层顺序反转，
+   因此网页样式表无法通过选择器权重或后续层覆盖；匿名层也不能被网页追加规则。
+   行内重要声明仍需后台 USER 样式覆盖，不能把提前样式当作同步 USER 注入。
+   关闭时通过根元素开关恢复网站自身的间距声明。 */
+@layer {
+  :root:not([data-native-auto-space-off]),
+  :root:not([data-native-auto-space-off]) *,
+  :root:not([data-native-auto-space-off])::before,
+  :root:not([data-native-auto-space-off])::after,
+  :root:not([data-native-auto-space-off])::placeholder,
+  :root:not([data-native-auto-space-off]) ::before,
+  :root:not([data-native-auto-space-off]) ::after,
+  :root:not([data-native-auto-space-off]) ::placeholder {
+    text-autospace: normal !important;
+  }
 }
