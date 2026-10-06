@@ -38,7 +38,8 @@ test("默认全局开启，站点三态、子域名、端口及同等规则顺�
   assert.equal(parseDomain("https://EXAMPLE.com:443/path").domain, "example.com:443");
   assert.equal(parseDomain("[::1]:80").domain, "[::1]:80");
   assert.equal(parseDomain("例子.中国").host, "xn--fsqu00a.xn--fiqs8s");
-  for (const domain of ["", "bad domain", "https://a@b", "ftp://example.com", "example.com:65536"]) assert.equal(parseDomain(domain), null);
+  for (const domain of ["", "bad domain", "https://a@b", "ftp://example.com", "example.com:65536", "*", "foo*.example.com", "**.example.com"]) assert.equal(parseDomain(domain), null);
+  assert.equal(parseDomain("*.example.com").domain, "example.com");
 });
 
 async function uiPage(name, stored = {}, currentURL = "https://docs.example.com/page") {
@@ -97,6 +98,58 @@ test("工具栏显示继承规则，本站覆盖和跟随全局及时保存", as
   await page.getByRole("button", { name: /管理所有网站/ }).click();
   assert.equal(await page.evaluate(() => __opened), true);
   await page.close();
+});
+
+test("弹窗修改当前主机的显式默认端口规则，不被原规则覆盖", async () => {
+  for (const [currentURL, domain] of [["https://docs.example.com/page", "docs.example.com:443"],
+    ["http://docs.example.com/page", "docs.example.com:80"], ["http://docs.example.com:8443/page", "docs.example.com:8443"]]) {
+    const page = await uiPage("popup.html", { enabled: false, siteRules: [{ domain, mode: "off" }] }, currentURL);
+    try {
+      await page.waitForFunction(() => document.getElementById("effective").textContent.includes("匹配"));
+      await page.getByText("开启", { exact: true }).click();
+      await page.waitForFunction(() => __stored.siteRules[0].mode === "on");
+      assert.deepEqual(await page.evaluate(() => __stored), { enabled: false, siteRules: [{ domain, mode: "on" }] });
+      assert.equal(await page.locator('[value="on"]').isChecked(), true);
+      assert.match(await page.locator("#effective").textContent(), /^当前：开启/);
+      await page.getByText("跟随全局", { exact: true }).click();
+      await page.waitForFunction(() => __stored.siteRules[0].mode === "inherit");
+      assert.equal(await page.locator('[value="inherit"]').isChecked(), true);
+      assert.match(await page.locator("#effective").textContent(), /^当前：关闭/);
+    } finally { await page.close(); }
+  }
+});
+
+test("弹窗按最新配置保存所选字段，保留其他窗口更新的全局开关与网站规则", async () => {
+  const page = await uiPage("popup.html", { enabled: true, siteRules: [] });
+  try {
+    await page.waitForFunction(() => document.getElementById("effective").textContent.includes("跟随全局"));
+    await page.evaluate(() => { __stored.siteRules.push({ domain: "example.net", mode: "off" }); });
+    await page.locator("#enabled").uncheck();
+    await page.waitForFunction(() => __stored.enabled === false);
+    assert.deepEqual(await page.evaluate(() => __stored.siteRules), [{ domain: "example.net", mode: "off" }]);
+    await page.evaluate(() => { __stored.enabled = true; __stored.siteRules.push({ domain: "other.example.net", mode: "on" }); });
+    await page.getByText("开启", { exact: true }).click();
+    await page.waitForFunction(() => __stored.siteRules.length === 3);
+    assert.deepEqual(await page.evaluate(() => __stored), { enabled: true, siteRules: [
+      { domain: "example.net", mode: "off" }, { domain: "other.example.net", mode: "on" }, { domain: "docs.example.com", mode: "on" }
+    ] });
+  } finally { await page.close(); }
+});
+
+test("弹窗读取最新配置失败时保留原设置，恢复控件并允许重试", async () => {
+  const page = await uiPage("popup.html", { enabled: true, siteRules: [] });
+  try {
+    await page.waitForFunction(() => document.getElementById("effective").textContent.includes("跟随全局"));
+    await page.evaluate(() => { chrome.storage.local.get = async () => { throw new Error("模拟读取失败"); }; });
+    await page.locator("#enabled").click();
+    await page.waitForFunction(() => document.getElementById("status").textContent.includes("保存失败"));
+    assert.equal(await page.locator("#enabled").isChecked(), true);
+    assert.equal(await page.locator("#enabled").isEnabled(), true);
+    assert.deepEqual(await page.evaluate(() => __stored), { enabled: true, siteRules: [] });
+    await page.evaluate(() => { chrome.storage.local.get = async () => ({ settings: __stored }); });
+    await page.locator("#enabled").uncheck();
+    await page.waitForFunction(() => __stored.enabled === false);
+  } finally { await page.close(); }
 });
 
 test("保存期间的新编辑保留为草稿，失败后仍能重试", async () => {

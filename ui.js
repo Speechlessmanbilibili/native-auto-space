@@ -74,10 +74,10 @@
     document.querySelectorAll('[name="site-mode"]').forEach(input => { input.checked = input.value === (result.rule?.mode || "inherit"); });
     $("#effective").textContent = "当前：" + (result.enabled ? "开启" : "关闭") + (result.rule ? " · 匹配 " + result.rule.domain : " · 跟随全局");
   }
-  async function savePopup(value) {
+  async function savePopup(change) {
     $("#enabled").disabled = true;
     $("#site-mode").disabled = true;
-    try { await write(value); status("已保存"); } catch { status("保存失败，请重试。"); }
+    try { await write(change(await read())); status("已保存"); } catch { status("保存失败，请重试。"); }
     finally {
       $("#enabled").disabled = false;
       $("#site-mode").disabled = !url?.hostname;
@@ -91,13 +91,19 @@
     $("#site-mode").disabled = !url?.hostname;
     renderPopup();
     $("#enabled").addEventListener("change", async () => {
-      await savePopup({ ...settings, enabled: $("#enabled").checked });
+      const enabled = $("#enabled").checked;
+      await savePopup(latest => ({ ...latest, enabled }));
     });
     $("#site-mode").addEventListener("change", async event => {
-      const domain = parseDomain(url.host).domain, mode = event.target.value;
-      const rules = settings.siteRules.filter(rule => rule.domain !== domain);
-      rules.push({ domain, mode });
-      await savePopup({ ...settings, siteRules: rules });
+      const mode = event.target.value;
+      await savePopup(latest => {
+        const current = parseDomain(url.host), matched = parseDomain(resolve(latest, url.href).rule?.domain);
+        // URL 省略默认端口时，继续编辑当前主机实际命中的显式端口规则。
+        const domain = matched?.host === current.host && matched.port !== null ? matched.domain : current.domain;
+        const rules = latest.siteRules.filter(rule => rule.domain !== domain);
+        rules.push({ domain, mode });
+        return { ...latest, siteRules: rules };
+      });
     });
     $("#open-options").addEventListener("click", () => chrome.runtime.openOptionsPage());
   }

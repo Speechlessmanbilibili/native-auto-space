@@ -14,7 +14,7 @@
     if (!parts) return null;
     try {
       const host = new URL("http://" + authority).hostname.toLowerCase().replace(/\.$/, "");
-      if (!host) return null;
+      if (!host || host.includes("*")) return null;
       // 显式端口单独保留，避免 URL 把 80 等默认端口省略。
       const port = parts[2] === undefined ? null : String(Number(parts[2]));
       return { host, port, domain: host + (port === null ? "" : ":" + port) };
@@ -41,6 +41,18 @@
     }
     return { enabled: rule?.mode === "on" ? true : rule?.mode === "off" ? false : settings.enabled, rule };
   }
+  // 来源回退框架沿用创建页面的地址；data 框架的运行时来源可能为 null。
+  function sourceAddress(address, ...sources) {
+    if (!/^(?:about:(?:blank|srcdoc)(?:[#?]|$)|blob:|data:|filesystem:)/i.test(address || "")) return address;
+    for (const source of [address, ...sources]) {
+      try {
+        const url = new URL(source);
+        if (["http:", "https:", "file:"].includes(url.protocol)) return url.href;
+        if (/^https?:\/\//.test(url.origin)) return url.origin;
+      } catch {}
+    }
+    return address;
+  }
   // 每条规则生成独立的开启区域，排除更具体规则，保持端口与顺序优先级。
   function earlyScripts(value) {
     const settings = normalize(value), seen = new Set();
@@ -52,7 +64,6 @@
       const host = rule.host.startsWith("[") || /^[\d.]+$/.test(rule.host) ? rule.host : "*." + rule.host;
       return ["http", "https"].map(scheme => scheme + "://" + host + (rule.port === null ? "" : ":" + rule.port) + "/*");
     };
-    // RegisteredContentScript 不支持 origin；提前 CSS 为 AUTHOR，USER 来源只用于 insertCSS。
     const script = (id, matches, excludeMatches) => ({ id: "auto-space-early-" + id, css: ["early.css"], matches,
       excludeMatches: [...new Set(excludeMatches)], allFrames: true, matchOriginAsFallback: true, runAt: "document_start", persistAcrossSessions: true });
     const result = settings.enabled ? [script("global", ["<all_urls>"], rules.flatMap(patterns))] : [];
@@ -64,5 +75,5 @@
     }
     return result;
   }
-  globalThis.AutoSpace = { CSS, MODES, parseDomain, normalize, resolve, earlyScripts };
+  globalThis.AutoSpace = { CSS, MODES, parseDomain, normalize, resolve, sourceAddress, earlyScripts };
 })();

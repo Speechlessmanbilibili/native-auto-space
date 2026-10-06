@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "中西文自动间距",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "minimum_chrome_version": "120",
   "description": "全局启用浏览器原生中西文自动间距，支持单个网站覆盖设置。",
   "permissions": ["storage", "scripting", "activeTab"],

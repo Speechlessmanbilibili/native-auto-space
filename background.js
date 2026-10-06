@@ -45,8 +45,8 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
   const key = sender.documentId;
   const task = (pending.get(key) || Promise.resolve()).catch(() => {}).then(async () => {
     await ready;
-    const address = /^about:(?:blank|srcdoc)(?:[#?]|$)/.test(sender.url || "") ? sender.origin : sender.url;
-    // USER 重要声明高于网页（含行内）的重要声明；这是异步补充，不能保证早于网站首段脚本。
+    const address = AutoSpace.sourceAddress(sender.url, sender.origin, message.sourceAddress);
+    // 后台异步补充 USER 重要声明，覆盖网页样式表及行内的重要声明。
     const options = { target: { tabId: sender.tab.id, documentIds: [key] }, css: AutoSpace.CSS, origin: "USER" };
     let state, version;
     do {
@@ -58,7 +58,7 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
       if (state.enabled) {
         if (!previous?.enabled) {
           // 后台重启会丢失内存状态，但旧文档的 USER 样式仍在。先移除旧副本，
-          // 避免重复注入后关闭只移除一份，导致网站间距无法恢复。
+          // 保持单份注入，使关闭操作完整恢复网站原有间距。
           if (!previous && message.initial !== true) await chrome.scripting.removeCSS(options);
           await chrome.scripting.insertCSS(options);
         }

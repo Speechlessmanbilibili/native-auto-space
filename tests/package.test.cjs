@@ -8,11 +8,12 @@ const root = path.resolve(__dirname, "..");
 
 test("PowerShell 5.1 打包路径、文件头、版本和内容一致，版本包复制到下载目录", () => {
   const script = fs.readFileSync(path.join(root, "build-release.ps1"));
+  const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.json"), "utf8"));
   assert.deepEqual([...script.subarray(0, 3)], [239, 187, 191]);
   const result = JSON.parse(execFileSync("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", path.join(root, "build-release.ps1")], { encoding: "utf8" }));
   const buffer = fs.readFileSync(result.zip);
   assert.deepEqual(fs.readFileSync(result.downloadZip), buffer);
-  assert.equal(path.basename(result.downloadZip), "native-auto-space-v1.0.1.zip");
+  assert.equal(path.basename(result.downloadZip), `native-auto-space-v${manifest.version}.zip`);
   let end = buffer.length - 22;
   while (buffer.readUInt32LE(end) !== 0x06054b50) end--;
   const count = buffer.readUInt16LE(end + 10);
@@ -34,7 +35,7 @@ test("PowerShell 5.1 打包路径、文件头、版本和内容一致，版本�
     const compressed = buffer.subarray(start, start + size);
     const data = method === 8 ? zlib.inflateRawSync(compressed) : compressed;
     assert.deepEqual(data, fs.readFileSync(path.join(root, name)));
-    if (name === "manifest.json") assert.equal(JSON.parse(data).version, "1.0.1");
+    if (name === "manifest.json") assert.equal(JSON.parse(data).version, manifest.version);
     offset += 46 + nameLength + extra + comment;
   }
   for (const name of ["manifest.json", "background.js", "content.js", "shared.js", "early.css", "options.html", "popup.html", "ui.js", "ui.css", "icons/icon-128.png", "LICENSE"]) assert.ok(names.includes(name));

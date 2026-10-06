@@ -152,7 +152,7 @@ function environment(initialSettings = enabledSettings(true)) {
     return {
       message,
       async sync() { assert.deepEqual(await message({ type: "auto-space-registration-sync" }), { ok: true }); },
-      apply({ initial = false, userStyle = null, ...sender } = {}) {
+      apply({ initial = false, userStyle, ...sender } = {}) {
         return message({ type: "auto-space-apply", initial, userStyle }, {
           tab: { id: 7 }, documentId: "document-a", frameId: 0,
           url: "https://example.com/page", origin: "https://example.com", ...sender
@@ -220,6 +220,22 @@ test("提前注册仅使用公开字段，持久保持 document_start 和独立�
   assert.deepEqual(plain(AutoSpace.earlyScripts(enabledSettings(false))), []);
   assert.throws(() => validateRegistration({ ...scripts[0], origin: "USER" }), /origin/);
   assert.throws(() => validateRegistration({ ...scripts[0], cssOrigin: "user" }), /cssOrigin/);
+});
+
+test("来源回退沿用有效创建地址，blob 保留自身来源，普通网页忽略回退地址", () => {
+  for (const url of ["about:blank#section", "about:srcdoc", "data:text/html,test"]) {
+    assert.equal(AutoSpace.sourceAddress(url, "null", "https://example.com:8443/path"), "https://example.com:8443/path");
+  }
+  assert.equal(AutoSpace.sourceAddress("blob:https://example.com/id", "https://other.example.net"), "https://example.com");
+  assert.equal(AutoSpace.sourceAddress("https://example.com/page", "https://other.example.net"), "https://example.com/page");
+  assert.equal(AutoSpace.sourceAddress("data:text/html,test", "about:blank", "null", "https://example.com"), "https://example.com/");
+});
+
+test("非法通配域名不会进入注册范围，标准前缀通配保持正常匹配", () => {
+  for (const domain of ["*", "foo*.example.com", "**.example.com", "%2a.example.com"]) assert.equal(AutoSpace.parseDomain(domain), null);
+  assert.equal(AutoSpace.parseDomain("*.example.com").domain, "example.com");
+  const scripts = plain(AutoSpace.earlyScripts({ enabled: true, siteRules: [{ domain: "foo*.example.com", mode: "off" }] }));
+  assert.equal(scripts.length, 1); assert.deepEqual(scripts[0].excludeMatches, []);
 });
 
 test("注册同步等待完成，更新站点范围时保留其他脚本，同配置不重复注册", async () => {

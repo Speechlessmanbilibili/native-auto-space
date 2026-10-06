@@ -205,7 +205,6 @@ test("后台真正停止再唤醒后，无关设置更新保留后来 USER 声�
     await session?.detach(); await control.close(); await page.close();
   }
 });
-
 test("记录网页离散过渡的浏览器行为，不以禁止全站动画伪造覆盖保证", async t => {
   await settings({ enabled: false, siteRules: [] });
   const page = await opened("example.com", port, "inline");
@@ -275,6 +274,60 @@ test("空白子框架按创建者来源提前注入，关闭后恢复原间距�
   });
   assert.equal(await child.locator("#t").evaluate(node => getComputedStyle(node).textAutospace), "no-autospace");
   await page.close();
+});
+test("blob 与 data 框架沿用创建者的域名和端口规则，实时开关保持一致", async () => {
+  await settings({ enabled: true, siteRules: [{ domain: "example.com:" + port, mode: "off" }] });
+  const page = await opened("example.com");
+  try {
+    await page.evaluate(text => {
+      for (const kind of ["blob", "data", "sandboxed-data"]) {
+        const frame = document.createElement("iframe"); frame.id = kind;
+        if (kind === "sandboxed-data") frame.setAttribute("sandbox", "allow-scripts");
+        frame.src = kind === "blob" ? URL.createObjectURL(new Blob([text], { type: "text/html" }))
+          : "data:text/html;charset=utf-8," + encodeURIComponent(text);
+        document.body.append(frame);
+      }
+    }, fixture);
+    const frames = ["blob", "data", "sandboxed-data"].map(id => page.frameLocator("#" + id));
+    for (const frame of frames) {
+      await frame.locator("html[data-native-auto-space-off]").waitFor();
+      assert.equal(await frame.locator("#t").evaluate(node => getComputedStyle(node).textAutospace), "no-autospace");
+    }
+    for (const mode of ["on", "off", "inherit"]) {
+      await settings({ enabled: true, siteRules: [{ domain: "example.com:" + port, mode }] });
+      const expected = mode === "off" ? "no-autospace" : "normal";
+      for (const frame of frames) {
+        const node = frame.locator("#t");
+        await node.evaluate(async (element, expected) => {
+          const deadline = performance.now() + 5000;
+          while (getComputedStyle(element).textAutospace !== expected && performance.now() < deadline)
+            await new Promise(resolve => requestAnimationFrame(resolve));
+        }, expected);
+        assert.equal(await node.evaluate(element => getComputedStyle(element).textAutospace), expected, mode);
+      }
+    }
+  } finally { await page.close(); }
+});
+test("关闭间距后更换或重建根元素，不会重新激活此前注入的提前样式", async () => {
+  await settings({ enabled: true, siteRules: [] });
+  const page = await opened("example.com");
+  try {
+    await settings({ enabled: false, siteRules: [] });
+    await page.waitForFunction(() => getComputedStyle(t).textAutospace === "no-autospace");
+    for (const separated of [false, true]) {
+      await page.evaluate(async separated => {
+        const next = document.createElement("html");
+        next.innerHTML = '<head><style>*{text-autospace:no-autospace}</style></head><body><p id=t>中文English</p></body>';
+        if (separated) { document.removeChild(document.documentElement); await new Promise(resolve => setTimeout(resolve, 0)); document.append(next); }
+        else document.replaceChild(next, document.documentElement);
+      }, separated);
+      await page.waitForFunction(() => document.documentElement.hasAttribute("data-native-auto-space-off"));
+      assert.equal(await page.locator("#t").evaluate(node => getComputedStyle(node).textAutospace), "no-autospace");
+    }
+    await settings({ enabled: true, siteRules: [] });
+    await page.waitForFunction(() => getComputedStyle(t).textAutospace === "normal");
+    assert.equal(await page.locator("html").getAttribute("data-native-auto-space-off"), null);
+  } finally { await page.close(); }
 });
 test("后台停止后重新开页，持久注册仍在网站脚本之前生效", async () => {
   await settings({ enabled: true, siteRules: [] });
