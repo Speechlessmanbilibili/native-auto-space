@@ -52,6 +52,7 @@
       const host = rule.host.startsWith("[") || /^[\d.]+$/.test(rule.host) ? rule.host : "*." + rule.host;
       return ["http", "https"].map(scheme => scheme + "://" + host + (rule.port === null ? "" : ":" + rule.port) + "/*");
     };
+    // RegisteredContentScript 不支持 origin；提前 CSS 为 AUTHOR，USER 来源只用于 insertCSS。
     const script = (id, matches, excludeMatches) => ({ id: "auto-space-early-" + id, css: ["early.css"], matches,
       excludeMatches: [...new Set(excludeMatches)], allFrames: true, matchOriginAsFallback: true, runAt: "document_start", persistAcrossSessions: true });
     const result = settings.enabled ? [script("global", ["<all_urls>"], rules.flatMap(patterns))] : [];

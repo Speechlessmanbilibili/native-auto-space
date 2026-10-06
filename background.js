@@ -46,15 +46,22 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
   const task = (pending.get(key) || Promise.resolve()).catch(() => {}).then(async () => {
     await ready;
     const address = /^about:(?:blank|srcdoc)(?:[#?]|$)/.test(sender.url || "") ? sender.origin : sender.url;
+    // USER 重要声明高于网页（含行内）的重要声明；这是异步补充，不能保证早于网站首段脚本。
     const options = { target: { tabId: sender.tab.id, documentIds: [key] }, css: AutoSpace.CSS, origin: "USER" };
     let state, version;
     do {
       version = revision;
       state = AutoSpace.resolve(settings, address);
-      const previous = applied.get(key);
+      // 页面只报告已完成且没有后续未确认操作的样式状态；后台休眠后可复用旧注入顺序。
+      const previous = applied.get(key) || (typeof message.userStyle === "boolean" ? { enabled: message.userStyle } : null);
       // 首次添加直接注入；相同配置复用样式，后台重启后的关闭请求仍清理旧样式。
       if (state.enabled) {
-        if (!previous?.enabled) await chrome.scripting.insertCSS(options);
+        if (!previous?.enabled) {
+          // 后台重启会丢失内存状态，但旧文档的 USER 样式仍在。先移除旧副本，
+          // 避免重复注入后关闭只移除一份，导致网站间距无法恢复。
+          if (!previous && message.initial !== true) await chrome.scripting.removeCSS(options);
+          await chrome.scripting.insertCSS(options);
+        }
       } else if (previous?.enabled || (!previous && message.initial !== true)) await chrome.scripting.removeCSS(options);
       applied.set(key, { enabled: state.enabled, tabId: sender.tab.id });
       if (applied.size > 1024) applied.delete(applied.keys().next().value);
