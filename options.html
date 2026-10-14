@@ -1,27 +1,80 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>中西文自动间距 · 设置</title><link rel="stylesheet" href="ui.css"></head>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>中西文自动间距 · 设置</title>
+  <link rel="icon" href="icons/source.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="ui.css">
+</head>
 <body data-view="options">
-  <main>
-    <header><p class="eyebrow">AUTO SPACE</p><h1>中西文自动间距</h1><p class="intro">用浏览器原生排版，为中文与西文、数字之间留出自然间距。</p></header>
+  <main class="workspace">
+    <header class="app-header">
+      <a class="brand" href="#top" aria-label="中西文自动间距，返回顶部"><img class="brand-mark" src="icons/source.svg" width="42" height="42" alt=""><span>中西文自动间距</span></a>
+      <span class="header-label">偏好设置</span>
+    </header>
+    <div class="page-heading" id="top">
+      <p class="eyebrow">A LITTLE SPACE, A BETTER READ.</p>
+      <h1>刚刚好的间距。</h1>
+      <p class="intro">让中文、English与数字之间，自然留白。</p>
+    </div>
     <form id="settings-form">
-      <section><label class="global"><span><strong>全局自动间距</strong><small>网站规则可以单独覆盖全局开关。</small></span><input id="enabled" type="checkbox" role="switch"></label>
-        <p class="preview">中文与English、数字2026自然衔接。</p>
+      <section class="overview" aria-labelledby="global-heading">
+        <label class="global global-setting">
+          <span class="setting-copy"><strong id="global-heading">全局自动间距</strong><small>默认应用于所有网站，也可以为个别网站单独设置。</small></span>
+          <span class="switch-group"><span id="global-state" class="switch-state">读取中</span><input id="enabled" type="checkbox" role="switch" aria-labelledby="global-heading"></span>
+        </label>
+        <div class="preview-area">
+          <div class="preview-heading"><h2>一点间距，读起来更舒服</h2><span class="subtle-label">实时排版预览</span></div>
+          <div class="preview-grid">
+            <div class="specimen specimen-before">
+              <span class="specimen-label">未启用</span>
+              <p class="preview preview-without">中文与English、数字2026自然衔接。</p>
+              <p class="preview-detail preview-without">读完这篇文章，只用了5分钟。</p>
+            </div>
+            <div class="specimen specimen-current" id="preview-panel">
+              <span class="specimen-label"><span class="state-dot" aria-hidden="true"></span><span id="preview-label">当前设置</span></span>
+              <p class="preview" id="live-preview">中文与English、数字2026自然衔接。</p>
+              <p class="preview-detail" id="live-preview-detail">读完这篇文章，只用了5分钟。</p>
+            </div>
+          </div>
+          <p class="preview-note"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 4h10M3 8h5M3 12h10M11 6l2 2-2 2"/></svg>文字保持原样，间距由浏览器自然排出。</p>
+        </div>
       </section>
-      <section aria-labelledby="rules-heading"><div class="section-heading"><h2 id="rules-heading">网站设置</h2><button id="add-rule" type="button" class="secondary">添加网站</button></div>
-        <p class="hint">域名同时匹配主域名和子域名；更具体的域名优先。填写端口时仅匹配该端口。</p>
-        <div id="rules"></div><p id="empty" class="empty">尚未设置例外，所有网站跟随全局。</p>
+      <section class="rules-section" aria-labelledby="rules-heading">
+        <div class="section-heading">
+          <div><div class="title-line"><h2 id="rules-heading">网站规则</h2><span id="rule-count" class="count">0</span></div><p class="hint">每个网站，都可以有自己的阅读习惯。</p></div>
+          <button id="add-rule" type="button" class="secondary"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>添加网站</button>
+        </div>
+        <div id="rules" class="rule-list"></div>
+        <div id="empty" class="empty">
+          <span class="empty-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><rect x="5" y="7" width="22" height="18" rx="4"/><path d="M5 13h22M10 10h.01M13 10h.01M11 18h10M11 21h6"/></svg></span>
+          <div><h3>所有网站，跟随全局</h3><p>添加网站后，可以为其单独开启或关闭自动间距。</p></div>
+        </div>
+        <details class="rule-help">
+          <summary><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m6 4 4 4-4 4"/></svg>域名如何匹配？</summary>
+          <div class="help-content"><p><code>example.com</code> 同时匹配主域名和子域名。<code>docs.example.com</code> 等更具体的域名优先；填写 <code>example.com:443</code> 时，仅匹配该端口。</p><p>同等规则按列表顺序，优先使用第一条。</p></div>
+        </details>
       </section>
-      <footer><p id="status" role="status" aria-live="polite"></p><button id="save" type="submit">保存设置</button></footer>
+      <footer class="save-bar">
+        <div class="save-feedback"><span class="feedback-dot" aria-hidden="true"></span><p id="status" role="status" aria-live="polite">正在读取设置……</p></div>
+        <button id="save" type="submit" class="primary">保存设置<svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 8 3 3 5-6"/></svg></button>
+      </footer>
     </form>
-    <p id="unsupported" class="hint" hidden>当前浏览器尚不支持 text-autospace，请更新浏览器。</p>
-    <p class="hint">“关闭”会移除此扩展的间距样式，恢复网站自身的设置。配置仅保存在当前浏览器中。</p>
+    <p id="unsupported" class="notice" hidden>当前浏览器尚不支持 text-autospace，请更新浏览器。</p>
+    <p class="page-note">关闭后恢复网站自身的间距设置。配置保存在当前浏览器中。</p>
   </main>
-  <template id="rule-template"><div class="rule">
-    <div class="rule-top"><label>域名<input class="domain" type="text" placeholder="example.com" autocomplete="off" spellcheck="false" required></label><button type="button" class="delete secondary" aria-label="删除网站规则">删除</button></div>
-    <fieldset class="segmented"><legend class="sr-only">本站自动间距</legend>
-      <label><input type="radio" value="inherit"><span>跟随全局</span></label><label><input type="radio" value="on"><span>开启</span></label><label><input type="radio" value="off"><span>关闭</span></label>
-    </fieldset>
-  </div></template>
+  <template id="rule-template">
+    <div class="rule">
+      <div class="rule-top">
+        <label><span class="field-label">网站域名</span><input class="domain" type="text" placeholder="example.com" autocomplete="off" spellcheck="false" required></label>
+        <button type="button" class="delete icon-button" aria-label="删除网站规则" title="删除网站规则"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 6h12M8 3h4l1 3H7l1-3ZM6 6l1 11h6l1-11M9 9v5M11 9v5"/></svg></button>
+      </div>
+      <fieldset class="segmented"><legend class="sr-only">本站自动间距</legend>
+        <label><input type="radio" value="inherit"><span>跟随全局</span></label><label><input type="radio" value="on"><span>开启</span></label><label><input type="radio" value="off"><span>关闭</span></label>
+      </fieldset>
+    </div>
+  </template>
   <script src="shared.js"></script><script src="ui.js"></script>
-</body></html>
+</body>
+</html>

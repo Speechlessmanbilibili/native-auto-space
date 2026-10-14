@@ -3,7 +3,10 @@
   const $ = selector => document.querySelector(selector);
   const { normalize, parseDomain, resolve } = AutoSpace;
   let settings = normalize(), saved = "", ruleId = 0, url = null;
-  const status = text => { $("#status").textContent = text; };
+  const status = (text, state = "neutral") => {
+    $("#status").textContent = text;
+    $("#status").dataset.state = state;
+  };
   const read = async () => normalize((await chrome.storage.local.get("settings")).settings);
   const write = async value => {
     await chrome.storage.local.set({ settings: value }); settings = value;
@@ -14,6 +17,21 @@
   };
   $("#unsupported").hidden = CSS.supports("text-autospace", "normal");
 
+  // 预览直接反映开关草稿，保存操作独立处理实际网页配置。
+  function updateGlobalUI() {
+    const enabled = $("#enabled").checked;
+    $("#global-state").textContent = enabled ? "已开启" : "已关闭";
+    if ($("#preview-panel")) {
+      $("#preview-panel").dataset.enabled = String(enabled);
+      $("#preview-label").textContent = enabled ? "当前设置 · 已开启" : "当前设置 · 已关闭";
+    }
+  }
+  function updateRuleCount() {
+    const count = $("#rules").children.length;
+    $("#rule-count").textContent = count;
+    $("#rule-count").setAttribute("aria-label", "已设置 " + count + " 条网站规则");
+    $("#empty").hidden = count > 0;
+  }
   function addRule(rule = { domain: "", mode: "inherit" }, focus = false) {
     const row = $("#rule-template").content.firstElementChild.cloneNode(true);
     row.querySelector(".domain").value = rule.domain;
@@ -24,11 +42,11 @@
     ruleId++;
     row.querySelector(".delete").addEventListener("click", () => {
       const next = row.nextElementSibling || row.previousElementSibling;
-      row.remove(); $("#empty").hidden = !!$("#rules").children.length;
+      row.remove();
       (next?.querySelector(".domain") || $("#add-rule")).focus(); dirty();
     });
-    $("#rules").appendChild(row); $("#empty").hidden = true;
-    if (focus) row.querySelector(".domain").focus();
+    $("#rules").appendChild(row); updateRuleCount();
+    if (focus) { row.classList.add("is-new"); row.querySelector(".domain").focus(); }
   }
   function formSettings() {
     return { enabled: $("#enabled").checked, siteRules: [...document.querySelectorAll(".rule")].map(row => ({
@@ -36,12 +54,14 @@
     })) };
   }
   function dirty() {
-    status(JSON.stringify(formSettings()) === saved ? "已保存" : "有未保存的更改");
+    updateGlobalUI(); updateRuleCount();
+    const changed = JSON.stringify(formSettings()) !== saved;
+    status(changed ? "有未保存的更改" : "已保存", changed ? "dirty" : "success");
   }
   async function options() {
     $("#enabled").checked = settings.enabled;
     settings.siteRules.forEach(rule => addRule(rule)); saved = JSON.stringify(formSettings());
-    $("#empty").hidden = !!settings.siteRules.length;
+    dirty();
     $("#add-rule").addEventListener("click", () => { addRule(undefined, true); dirty(); });
     $("#settings-form").addEventListener("input", event => { if (event.target.matches(".domain")) event.target.setCustomValidity(""); dirty(); });
     $("#settings-form").addEventListener("change", dirty);
@@ -56,19 +76,23 @@
         rule.domain = parsed.domain; seen.add(rule.domain);
       }
       $("#save").disabled = true;
+      $("#save").setAttribute("aria-busy", "true");
+      status("正在保存……", "saving");
       try {
         await write(value);
         if (JSON.stringify(formSettings()) === draft) {
           document.querySelectorAll(".domain").forEach((input, i) => { input.value = value.siteRules[i].domain; });
         }
         saved = JSON.stringify(value);
-        status(JSON.stringify(formSettings()) === saved ? "已保存，已打开的网页会自动应用。" : "已保存，仍有未保存的更改。");
-      } catch { status("保存失败，请重试。"); }
-      finally { $("#save").disabled = false; }
+        const changed = JSON.stringify(formSettings()) !== saved;
+        status(changed ? "已保存，仍有未保存的更改。" : "已保存，已打开的网页会自动应用。", changed ? "dirty" : "success");
+      } catch { status("保存失败，请重试。", "error"); }
+      finally { $("#save").disabled = false; $("#save").setAttribute("aria-busy", "false"); }
     });
   }
   function renderPopup() {
     $("#enabled").checked = settings.enabled;
+    updateGlobalUI();
     if (!url) return;
     const result = resolve(settings, url.href);
     document.querySelectorAll('[name="site-mode"]').forEach(input => { input.checked = input.value === (result.rule?.mode || "inherit"); });
@@ -77,7 +101,7 @@
   async function savePopup(change) {
     $("#enabled").disabled = true;
     $("#site-mode").disabled = true;
-    try { await write(change(await read())); status("已保存"); } catch { status("保存失败，请重试。"); }
+    try { await write(change(await read())); status("已保存", "success"); } catch { status("保存失败，请重试。", "error"); }
     finally {
       $("#enabled").disabled = false;
       $("#site-mode").disabled = !url?.hostname;
@@ -92,6 +116,7 @@
     renderPopup();
     $("#enabled").addEventListener("change", async () => {
       const enabled = $("#enabled").checked;
+      updateGlobalUI();
       await savePopup(latest => ({ ...latest, enabled }));
     });
     $("#site-mode").addEventListener("change", async event => {
@@ -107,5 +132,5 @@
     });
     $("#open-options").addEventListener("click", () => chrome.runtime.openOptionsPage());
   }
-  read().then(value => { settings = value; return document.body.dataset.view === "popup" ? popup() : options(); }).catch(() => status("读取设置失败，请重新打开此页面。"));
+  read().then(value => { settings = value; return document.body.dataset.view === "popup" ? popup() : options(); }).catch(() => status("读取设置失败，请重新打开此页面。", "error"));
 })();

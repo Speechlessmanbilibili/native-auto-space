@@ -14,8 +14,8 @@ const fixture = '<!doctype html><meta charset="utf-8"><style>* {text-autospace:n
 before(async () => {
   server = http.createServer((request, response) => {
     const name = request.url.slice(1).split("?")[0];
-    response.setHeader("Content-Type", name.endsWith(".js") ? "text/javascript" : name.endsWith(".css") ? "text/css" : "text/html; charset=utf-8");
-    if (["options.html", "popup.html", "shared.js", "ui.js", "ui.css"].includes(name)) response.end(fs.readFileSync(path.join(root, name)));
+    response.setHeader("Content-Type", name.endsWith(".js") ? "text/javascript" : name.endsWith(".css") ? "text/css" : name.endsWith(".svg") ? "image/svg+xml" : "text/html; charset=utf-8");
+    if (["options.html", "popup.html", "shared.js", "ui.js", "ui.css", "icons/source.svg"].includes(name)) response.end(fs.readFileSync(path.join(root, name)));
     else response.end(fixture);
   });
   await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
@@ -59,6 +59,9 @@ async function uiPage(name, stored = {}, currentURL = "https://docs.example.com/
 
 test("设置页添加、校验、保存、删除及全局开关正确，窄屏无溢出", async () => {
   const page = await uiPage("options.html");
+  assert.equal(await page.locator("#live-preview").evaluate(el => getComputedStyle(el).textAutospace), "normal");
+  assert.equal(await page.locator(".preview-without").first().evaluate(el => getComputedStyle(el).textAutospace), "no-autospace");
+  assert.equal(await page.locator("#live-preview").textContent(), "中文与English、数字2026自然衔接。");
   await page.getByRole("button", { name: "添加网站" }).click();
   await page.locator(".domain").fill("https://EXAMPLE.com:443/path");
   await page.getByText("关闭", { exact: true }).click();
@@ -72,6 +75,9 @@ test("设置页添加、校验、保存、删除及全局开关正确，窄屏�
   assert.equal((await page.evaluate(() => __stored.siteRules)).length, 1);
   await page.locator(".delete").last().click();
   await page.locator("#enabled").uncheck();
+  for (const selector of ["#live-preview", "#live-preview-detail"]) {
+    assert.equal(await page.locator(selector).evaluate(el => getComputedStyle(el).textAutospace), "no-autospace");
+  }
   await page.getByRole("button", { name: "保存设置" }).click();
   await page.waitForFunction(() => __stored.enabled === false);
   await page.locator(".delete").click();
