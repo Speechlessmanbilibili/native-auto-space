@@ -2,6 +2,12 @@
 
 根据 Git 提交、版本标签及 GitHub Release 记录整理。版本标题链接到对应 Release，日期采用首次发布时的北京时间；同版本安装包的后续更新另行标注日期。
 
+## [v1.2.0](https://github.com/Speechlessmanbilibili/native-auto-space/releases/tag/v1.2.0)（2026-10-15）
+
+- 将设置页重构为书页式排版，使用纸色、衬线标题、朱砂控件与并排试排样张。
+- 将工具栏弹窗设计为书签式布局，统一网站规则、开关和保存反馈，适配明暗主题及窄屏。
+- 更新扩展图标、页面标识和标签页图标，使用同系列的文字间距印记。
+
 ## [v1.1.0](https://github.com/Speechlessmanbilibili/native-auto-space/releases/tag/v1.1.0)（2026-10-15）
 
 - 重新设计设置页与工具栏弹窗，使用中性色、冷蓝色控件和清晰的排版层次，适配明暗主题与窄屏。

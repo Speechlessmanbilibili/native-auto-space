@@ -8,15 +8,16 @@
   <link rel="stylesheet" href="ui.css">
 </head>
 <body data-view="options">
-  <main class="workspace">
-    <header class="app-header">
-      <a class="brand" href="#top" aria-label="中西文自动间距，返回顶部"><img class="brand-mark" src="icons/source.svg" width="42" height="42" alt=""><span>中西文自动间距</span></a>
-      <span class="header-label">偏好设置</span>
+  <main class="workspace book-shell" id="top">
+    <header class="book-masthead">
+      <a class="book-brand" href="#top" aria-label="中西文自动间距，返回顶部"><img class="book-mark" src="icons/source.svg" width="38" height="38" alt=""><span>中西文自动间距</span></a>
+      <span class="book-volume">READING &amp; TYPE / 03</span>
     </header>
-    <div class="page-heading" id="top">
-      <p class="eyebrow">A LITTLE SPACE, A BETTER READ.</p>
-      <h1>刚刚好的间距。</h1>
-      <p class="intro">让中文、English与数字之间，自然留白。</p>
+    <div class="book-hero">
+      <div><p class="book-kicker">阅读与排版 · 留白篇</p>
+      <h1>字里行间，自有留白。</h1>
+      <p class="book-deck">让中文、English与数字之间，多一点呼吸的余地。</p></div>
+      <div class="book-flourish" aria-hidden="true">中 A<small>THE SPACE BETWEEN</small></div>
     </div>
     <form id="settings-form">
       <section class="overview" aria-labelledby="global-heading">
@@ -25,10 +26,10 @@
           <span class="switch-group"><span id="global-state" class="switch-state">读取中</span><input id="enabled" type="checkbox" role="switch" aria-labelledby="global-heading"></span>
         </label>
         <div class="preview-area">
-          <div class="preview-heading"><h2>一点间距，读起来更舒服</h2><span class="subtle-label">实时排版预览</span></div>
+          <div class="preview-heading"><h2>排版对照</h2><span class="subtle-label">TYPE SPECIMEN / 实时试排</span></div>
           <div class="preview-grid">
             <div class="specimen specimen-before">
-              <span class="specimen-label">未启用</span>
+              <span class="specimen-label">01 / 未启用</span>
               <p class="preview preview-without">中文与English、数字2026自然衔接。</p>
               <p class="preview-detail preview-without">读完这篇文章，只用了5分钟。</p>
             </div>
@@ -63,6 +64,7 @@
     </form>
     <p id="unsupported" class="notice" hidden>当前浏览器尚不支持 text-autospace，请更新浏览器。</p>
     <p class="page-note">关闭后恢复网站自身的间距设置。配置保存在当前浏览器中。</p>
+    <div class="book-colophon"><span>中西文自动间距</span><span>READING &amp; TYPE — 03</span></div>
   </main>
   <template id="rule-template">
     <div class="rule">

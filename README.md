@@ -10,6 +10,8 @@
 
 [查看暗色主题](docs/ui/options-dark.png)
 
+设置页与工具栏弹窗采用同系列书页风格，使用暖纸色、宋体标题、朱砂色控件和双页排版对照。[查看界面设计与完整截图](docs/ui/README.md)。
+
 从 [GitHub Release](https://github.com/Speechlessmanbilibili/native-auto-space/releases/latest) 下载版本 ZIP，拖入 Chrome/Edge 扩展管理页安装。需要浏览器支持 `text-autospace`；不支持时，设置页会提示更新浏览器。浏览器内部页和扩展商店等限制页面无法注入。本地文件需要在扩展管理页允许访问文件网址。
 
 固定扩展 ID 为 `hciemeeoeagloegjphmccjmhlmdhjkfa`。更新时拖入新版 ZIP，覆盖原扩展并沿用已有设置。
