@@ -1,31 +1,54 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-volume="03">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>中西文自动间距</title>
-  <link rel="icon" href="icons/source.svg" type="image/svg+xml">
+  <link rel="icon" href="icons/mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="kit/kit.css">
   <link rel="stylesheet" href="ui.css">
 </head>
 <body class="popup" data-view="popup">
-  <main>
-    <p class="popup-folio">READING &amp; TYPE / 03</p>
-    <header class="popup-header"><img class="brand-mark" src="icons/source.svg" width="38" height="38" alt=""><div><h1>中西文自动间距</h1><p>字里行间，自有留白。</p></div></header>
-    <label class="global popup-global"><span class="setting-copy"><strong id="global-heading">全局自动间距</strong><small id="global-state">读取中</small></span><input id="enabled" type="checkbox" role="switch" aria-labelledby="global-heading"></label>
+  <main class="popup-shell">
+    <header class="popup-head">
+      <div class="popup-brand">
+        <img src="icons/source.svg" width="26" height="26" alt="">
+        <strong>中西文自动间距</strong>
+      </div>
+    </header>
+
     <section class="popup-site" aria-labelledby="site-heading">
-      <div class="popup-site-heading"><svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="6.5"/><path d="M2.5 9h13M9 2.5c3.5 3.5 3.5 9.5 0 13-3.5-3.5-3.5-9.5 0-13Z"/></svg><h2 id="site-heading">当前网站</h2></div>
-      <p id="host" class="host">正在读取……</p>
-      <fieldset id="site-mode" class="segmented"><legend class="sr-only">本站自动间距</legend>
+      <p class="popup-label" id="site-heading">当前网站</p>
+      <p id="host" class="popup-host">正在读取……</p>
+      <fieldset id="site-mode" class="segmented popup-mode">
+        <legend class="sr-only">本站自动间距</legend>
         <label><input type="radio" name="site-mode" value="inherit"><span>跟随全局</span></label>
         <label><input type="radio" name="site-mode" value="on"><span>开启</span></label>
         <label><input type="radio" name="site-mode" value="off"><span>关闭</span></label>
       </fieldset>
-      <p id="effective" class="effective hint"></p>
+      <p id="effective" class="popup-effective">正在读取当前网站设置……</p>
     </section>
-    <p id="status" role="status" aria-live="polite"></p>
-    <p id="unsupported" class="notice" hidden>当前浏览器尚不支持 text-autospace，请更新浏览器。</p>
-    <button id="open-options" class="secondary" type="button">管理所有网站设置<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 12 12 4M4 4h8v8"/></svg></button>
+
+    <div class="popup-global">
+      <div>
+        <p class="popup-global-title">全局默认</p>
+        <p class="field-hint" id="global-state">读取中</p>
+      </div>
+      <label class="switch">
+        <input id="enabled" class="switch-input" type="checkbox" role="switch" aria-label="全局自动间距">
+        <span class="track" aria-hidden="true"></span>
+      </label>
+    </div>
+
+    <p id="status" class="popup-status" role="status" aria-live="polite"></p>
+    <p id="unsupported" class="notice is-danger" hidden>当前浏览器尚不支持 <code>text-autospace</code>，请更新浏览器。</p>
+
+    <button id="open-options" class="btn" type="button">管理所有网站
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 12 12 4M4 4h8v8"/></svg>
+    </button>
   </main>
-  <script src="shared.js"></script><script src="ui.js"></script>
+  <script src="shared.js"></script>
+  <script src="kit/kit.js"></script>
+  <script src="ui.js"></script>
 </body>
 </html>

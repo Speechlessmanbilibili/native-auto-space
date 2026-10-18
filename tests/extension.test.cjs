@@ -15,7 +15,7 @@ before(async () => {
   server = http.createServer((request, response) => {
     const name = request.url.slice(1).split("?")[0];
     response.setHeader("Content-Type", name.endsWith(".js") ? "text/javascript" : name.endsWith(".css") ? "text/css" : name.endsWith(".svg") ? "image/svg+xml" : "text/html; charset=utf-8");
-    if (["options.html", "popup.html", "shared.js", "ui.js", "ui.css", "icons/source.svg"].includes(name)) response.end(fs.readFileSync(path.join(root, name)));
+    if (["options.html", "popup.html", "shared.js", "ui.js", "ui.css", "kit/kit.css", "kit/kit.js", "icons/source.svg", "icons/mark.svg"].includes(name)) response.end(fs.readFileSync(path.join(root, name)));
     else response.end(fixture);
   });
   await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
@@ -92,7 +92,7 @@ test("设置页添加、校验、保存、删除及全局开关正确，窄屏�
 
 test("工具栏显示继承规则，本站覆盖和跟随全局及时保存", async () => {
   const page = await uiPage("popup.html", { enabled: true, siteRules: [{ domain: "example.com", mode: "off" }] });
-  await page.waitForFunction(() => document.getElementById("effective").textContent.includes("匹配 example.com"));
+  await page.waitForFunction(() => document.getElementById("effective").textContent.includes("匹配example.com"));
   assert.equal(await page.locator('[value="off"]').isChecked(), true);
   await page.getByText("开启", { exact: true }).click();
   await page.waitForFunction(() => __stored.siteRules.length === 2);

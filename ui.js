@@ -71,7 +71,7 @@
       const draft = JSON.stringify(value);
       for (const [i, rule] of value.siteRules.entries()) {
         const parsed = parseDomain(rule.domain), input = document.querySelectorAll(".domain")[i];
-        input.setCustomValidity(!parsed ? "请填写有效域名，例如 example.com。" : seen.has(parsed.domain) ? "此域名已有规则。" : "");
+        input.setCustomValidity(!parsed ? "请填写有效域名，例如example.com。" : seen.has(parsed.domain) ? "此域名已有规则。" : "");
         if (!input.reportValidity()) return;
         rule.domain = parsed.domain; seen.add(rule.domain);
       }
@@ -96,7 +96,7 @@
     if (!url) return;
     const result = resolve(settings, url.href);
     document.querySelectorAll('[name="site-mode"]').forEach(input => { input.checked = input.value === (result.rule?.mode || "inherit"); });
-    $("#effective").textContent = "当前：" + (result.enabled ? "开启" : "关闭") + (result.rule ? " · 匹配 " + result.rule.domain : " · 跟随全局");
+    $("#effective").textContent = "当前：" + (result.enabled ? "开启" : "关闭") + (result.rule ? " · 匹配" + result.rule.domain : " · 跟随全局");
   }
   async function savePopup(change) {
     $("#enabled").disabled = true;
@@ -123,7 +123,7 @@
       const mode = event.target.value;
       await savePopup(latest => {
         const current = parseDomain(url.host), matched = parseDomain(resolve(latest, url.href).rule?.domain);
-        // URL 省略默认端口时，继续编辑当前主机实际命中的显式端口规则。
+        // URL省略默认端口时，继续编辑当前主机实际命中的显式端口规则。
         const domain = matched?.host === current.host && matched.port !== null ? matched.domain : current.domain;
         const rules = latest.siteRules.filter(rule => rule.domain !== domain);
         rules.push({ domain, mode });

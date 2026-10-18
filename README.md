@@ -10,7 +10,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/ui/options-dark.png">
-  <img src="docs/ui/options-light.png" alt="中西文自动间距的书页式设置页，左右并排比较原文与当前自动间距效果">
+  <img src="docs/ui/options-light.png" alt="中西文自动间距的工作台式设置页，左右并排比较原样与当前自动间距效果">
 </picture>
 
 [完整设置页](docs/ui/options-full.png) · [工具栏弹窗](docs/ui/popup-light.png) · [窄屏布局](docs/ui/options-mobile.png)
@@ -30,7 +30,7 @@
 - **本站即时切换**：在工具栏弹窗选择“跟随全局/开启/关闭”。
 - **边切换，边对照**：设置页并排展示未启用效果与当前设置，全局开关实时联动右侧预览。
 - **随页面出现而生效**：提前注册样式，在 `document_start` 加载；后来出现的文字也沿用间距规则。
-- **浅色与暗色都清楚**：书页式设置页与书签式弹窗采用同系列纸色、墨色和朱砂控件。
+- **浅色与暗色都清楚**：工作台式设置页与紧凑弹窗采用同系列纸色、墨色和松绿控件。
 
 ## 安装与开始使用
 

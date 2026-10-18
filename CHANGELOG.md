@@ -2,6 +2,15 @@
 
 根据 Git 提交、版本标签及 GitHub Release 记录整理。版本标题链接到对应 Release，日期采用首次发布时的北京时间；同版本安装包的后续更新另行标注日期。
 
+## [v1.3.0](https://github.com/Speechlessmanbilibili/native-auto-space/releases/tag/v1.3.0)（2026-10-18）
+
+- 将设置页重构为单列工作台：固定应用栏、全局默认、排版对照与网站规则分区，统一控件尺寸与状态反馈。
+- 重新设计工具栏弹窗，突出当前网站、三态规则与全局默认。
+- 统一设置页标签图标与扩展图标。
+- 使用 `unicode-range` 分离中西文字体，中文引号、破折号与省略号由中文字体排，西文与数字仍用西文字体。
+- 界面文案改用 `text-autospace`，移除中西文之间的手动空格。
+- 适配明暗主题、窄屏、强制色彩与减少动效偏好。
+
 ## [v1.2.0](https://github.com/Speechlessmanbilibili/native-auto-space/releases/tag/v1.2.0)（2026-10-15）
 
 - 将设置页重构为书页式排版，使用纸色、衬线标题、朱砂控件与并排试排样张。

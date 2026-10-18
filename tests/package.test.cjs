@@ -38,6 +38,6 @@ test("PowerShell 5.1 打包路径、文件头、版本和内容一致，版本�
     if (name === "manifest.json") assert.equal(JSON.parse(data).version, manifest.version);
     offset += 46 + nameLength + extra + comment;
   }
-  for (const name of ["manifest.json", "background.js", "content.js", "shared.js", "early.css", "options.html", "popup.html", "ui.js", "ui.css", "icons/icon-128.png", "LICENSE"]) assert.ok(names.includes(name));
+  for (const name of ["manifest.json", "background.js", "content.js", "shared.js", "early.css", "options.html", "popup.html", "ui.js", "ui.css", "kit/kit.css", "kit/kit.js", "icons/icon-128.png", "LICENSE"]) assert.ok(names.includes(name));
   assert.equal(new Set(names).size, names.length);
 });
