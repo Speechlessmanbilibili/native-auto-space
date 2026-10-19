@@ -275,3 +275,17 @@ test("真实 MV3 注入覆盖网页重要声明，动态内容、框架及实时
     t.diagnostic(JSON.stringify({ disabledWidth, enabledWidth, text: await page.locator("#text").textContent() }));
   } finally { await context.close(); }
 });
+
+test("设置页保存局部草稿时合并其他窗口的新开关与规则", async () => {
+  const page = await uiPage("options.html", { enabled: true, siteRules: [] });
+  await page.evaluate(() => { __stored = { enabled: false, siteRules: [{ domain: "other.example.com", mode: "off" }] }; });
+  await page.locator("#add-rule").click();
+  await page.locator(".domain").fill("example.com");
+  await page.locator("#save").click();
+  await page.waitForFunction(() => document.getElementById("status").textContent.startsWith("已保存"));
+  const stored = await page.evaluate(() => __stored);
+  assert.equal(stored.enabled, false);
+  assert.deepEqual(stored.siteRules.map(rule => rule.domain), ["example.com", "other.example.com"]);
+  assert.equal(await page.locator("#enabled").isChecked(), false);
+  await page.close();
+});

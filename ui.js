@@ -2,7 +2,7 @@
   "use strict";
   const $ = selector => document.querySelector(selector);
   const { normalize, parseDomain, resolve } = AutoSpace;
-  let settings = normalize(), saved = "", ruleId = 0, url = null;
+  let settings = normalize(), saved = "", ruleId = 0, url = null, saving = false;
   const status = (text, state = "neutral") => {
     $("#status").textContent = text;
     $("#status").dataset.state = state;
@@ -67,6 +67,7 @@
     $("#settings-form").addEventListener("change", dirty);
     $("#settings-form").addEventListener("submit", async event => {
       event.preventDefault();
+      if (saving) return;
       const value = formSettings(), seen = new Set();
       const draft = JSON.stringify(value);
       for (const [i, rule] of value.siteRules.entries()) {
@@ -75,19 +76,24 @@
         if (!input.reportValidity()) return;
         rule.domain = parsed.domain; seen.add(rule.domain);
       }
-      $("#save").disabled = true;
+      saving = true; $("#save").disabled = true;
       $("#save").setAttribute("aria-busy", "true");
       status("正在保存……", "saving");
       try {
-        await write(value);
-        if (JSON.stringify(formSettings()) === draft) {
-          document.querySelectorAll(".domain").forEach((input, i) => { input.value = value.siteRules[i].domain; });
+        const merged = AutoSpace.mergeDraft(JSON.parse(saved), value, await read());
+        await write(merged);
+        const current = formSettings();
+        const rebased = AutoSpace.mergeDraft(JSON.parse(draft), current, merged);
+        $("#enabled").checked = rebased.enabled;
+        if (JSON.stringify(current.siteRules) !== JSON.stringify(rebased.siteRules)) {
+          $("#rules").replaceChildren(); rebased.siteRules.forEach(rule => addRule(rule));
         }
-        saved = JSON.stringify(value);
+        saved = JSON.stringify(merged);
+        updateGlobalUI(); updateRuleCount();
         const changed = JSON.stringify(formSettings()) !== saved;
         status(changed ? "已保存，仍有未保存的更改。" : "已保存，已打开的网页会自动应用。", changed ? "dirty" : "success");
       } catch { status("保存失败，请重试。", "error"); }
-      finally { $("#save").disabled = false; $("#save").setAttribute("aria-busy", "false"); }
+      finally { saving = false; $("#save").disabled = false; $("#save").setAttribute("aria-busy", "false"); }
     });
   }
   function renderPopup() {

@@ -75,5 +75,31 @@
     }
     return result;
   }
-  globalThis.AutoSpace = { CSS, MODES, parseDomain, normalize, resolve, sourceAddress, earlyScripts };
+  // 按字段合并草稿，保留其他窗口的新设置和同域名规则的独立编辑。
+  function mergeDraft(base, draft, latest) {
+    const equal = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+    const merge = (before, edited, current) => Object.fromEntries([...new Set([...Object.keys(current), ...Object.keys(edited)])]
+      .map(key => [key, equal(edited[key], before[key]) ? current[key] : edited[key]]));
+    const result = merge(base, draft, latest);
+    if (equal(base.siteRules, draft.siteRules)) return result;
+    const index = rules => {
+      const counts = new Map();
+      return new Map((rules || []).map(rule => {
+        const domain = parseDomain(rule.domain);
+        const name = domain ? domain.host + ":" + (domain.port || "") : rule.domain;
+        const count = counts.get(name) || 0; counts.set(name, count + 1);
+        return [name + "\0" + count, rule];
+      }));
+    };
+    const before = index(base.siteRules), edited = index(draft.siteRules), current = index(latest.siteRules);
+    const order = equal([...before.keys()], [...edited.keys()]) ? [...current.keys(), ...edited.keys()] : [...edited.keys(), ...current.keys()];
+    result.siteRules = [...new Set(order)].flatMap(key => {
+      if (before.has(key) && !edited.has(key)) return [];
+      if (!edited.has(key)) return current.has(key) ? [current.get(key)] : [];
+      if (!current.has(key)) return before.has(key) && equal(before.get(key), edited.get(key)) ? [] : [edited.get(key)];
+      return [merge(before.get(key) || {}, edited.get(key), current.get(key))];
+    });
+    return result;
+  }
+  globalThis.AutoSpace = { mergeDraft, CSS, MODES, parseDomain, normalize, resolve, sourceAddress, earlyScripts };
 })();
