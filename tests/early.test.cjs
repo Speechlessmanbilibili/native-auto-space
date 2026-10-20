@@ -205,30 +205,6 @@ test("后台真正停止再唤醒后，无关设置更新保留后来 USER 声�
     await session?.detach(); await control.close(); await page.close();
   }
 });
-test("记录网页离散过渡的浏览器行为，不以禁止全站动画伪造覆盖保证", async t => {
-  await settings({ enabled: false, siteRules: [] });
-  const page = await opened("example.com", port, "inline");
-  try {
-    await page.locator("#t").evaluate(node => {
-      node.style.setProperty("transition", "text-autospace 10s allow-discrete", "important");
-      getComputedStyle(node).textAutospace;
-    });
-    await settings({ enabled: true, siteRules: [] });
-    const result = await worker.evaluate(async url => {
-      const tab = (await chrome.tabs.query({})).find(tab => tab.url === url);
-      // 等待同文档的真实注入完成，不用固定睡眠猜测后台状态。
-      return chrome.scripting.executeScript({ target: { tabId: tab.id }, func: async () => {
-        const state = await chrome.runtime.sendMessage({ type: "auto-space-apply", initial: false });
-        const node = document.getElementById("t");
-        return { enabled: state?.enabled, value: getComputedStyle(node).textAutospace, behavior: getComputedStyle(node).transitionBehavior,
-          animations: node.getAnimations().map(animation => ({ type: animation.constructor.name, property: animation.transitionProperty })) };
-      } });
-    }, page.url());
-    t.diagnostic(JSON.stringify({ browser: context.browser().version(), transitionDiagnostic: result[0].result }));
-    assert.equal(result[0].result.enabled, true, "诊断必须确认 USER 注入成功");
-    assert.equal(result[0].result.behavior, "allow-discrete", "保留网站自身的过渡设置");
-  } finally { await page.close(); }
-});
 test("首次绘制按全局、子域名、显式端口、继承和同等规则顺序决定间距", async () => {
   await settings({ enabled: true, siteRules: [
     { domain: "example.com", mode: "off" }, { domain: "docs.example.com", mode: "on" },

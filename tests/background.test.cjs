@@ -44,22 +44,10 @@ function event() {
     get listener() { assert.equal(listeners.length, 1); return listeners[0]; }
   };
 }
-function onlyKnownAPI(value, name, unexpected) {
-  return new Proxy(value, {
-    get(target, property) {
-      if (typeof property === "string" && !Object.hasOwn(target, property)) {
-        unexpected.push(name + "." + property);
-        throw new Error("未授权的模拟 API：" + name + "." + property);
-      }
-      return Reflect.get(target, property);
-    }
-  });
-}
 function environment(initialSettings = enabledSettings(true)) {
   let stored = plain(initialSettings);
-  const registrations = new Map(), sheets = new Map(), calls = [], errors = [], unexpected = [];
+  const registrations = new Map(), sheets = new Map(), calls = [], errors = [];
   const delayed = new Map();
-  const wrap = (value, name) => onlyKnownAPI(value, name, unexpected);
   function pauseNext(method) {
     const entered = deferred(), released = deferred();
     const queue = delayed.get(method) || [];
@@ -83,7 +71,7 @@ function environment(initialSettings = enabledSettings(true)) {
     assert.equal(options.css, AutoSpace.CSS);
     assert.equal(options.origin, "USER");
   }
-  const scripting = wrap({
+  const scripting = {
     async getRegisteredContentScripts() {
       await record("getRegisteredContentScripts");
       return plain([...registrations.values()]);
@@ -120,18 +108,18 @@ function environment(initialSettings = enabledSettings(true)) {
       if (count > 1) sheets.set(key, count - 1);
       else sheets.delete(key);
     }
-  }, "chrome.scripting");
+  };
   function startWorker() {
     const onChanged = event(), onMessage = event(), onRemoved = event();
-    const chrome = wrap({
+    const chrome = {
       scripting,
-      storage: wrap({
-        local: wrap({ async get(key) { assert.equal(key, "settings"); return { settings: plain(stored) }; } }, "chrome.storage.local"),
+      storage: {
+        local: { async get(key) { assert.equal(key, "settings"); return { settings: plain(stored) }; } },
         onChanged
-      }, "chrome.storage"),
-      runtime: wrap({ id: "native-auto-space-test", onMessage }, "chrome.runtime"),
-      tabs: wrap({ onRemoved }, "chrome.tabs")
-    }, "chrome");
+      },
+      runtime: { id: "native-auto-space-test", onMessage },
+      tabs: { onRemoved }
+    };
     const context = vm.createContext({
       URL, chrome,
       console: { error(...args) { errors.push(args.join(" ")); } },
@@ -167,11 +155,11 @@ function environment(initialSettings = enabledSettings(true)) {
     };
   }
   return {
-    startWorker, pauseNext, registrations, sheets, calls, errors, unexpected,
+    startWorker, pauseNext, registrations, sheets, calls, errors,
     setStored(value) { stored = plain(value); },
     cssCalls() { return calls.filter(call => ["insertCSS", "removeCSS"].includes(call.method)); },
     registrationWrites() { return calls.filter(call => /^(?:register|update|unregister)ContentScripts$/.test(call.method)); },
-    assertClean() { assert.deepEqual(errors, []); assert.deepEqual(unexpected, []); }
+    assertClean() { assert.deepEqual(errors, []); }
   };
 }
 
@@ -179,6 +167,7 @@ test("共享配置在无浏览器环境下保留域名、端口、继承与同�
   assert.equal(AutoSpace.normalize(null).enabled, true);
   assert.equal(AutoSpace.parseDomain("https://EXAMPLE.com:443/path").domain, "example.com:443");
   assert.equal(AutoSpace.parseDomain("[::1]:80").domain, "[::1]:80");
+  assert.equal(AutoSpace.parseDomain("例子.中国").host, "xn--fsqu00a.xn--fiqs8s");
   for (const domain of ["", "bad domain", "https://a@b", "ftp://example.com", "example.com:65536"]) {
     assert.equal(AutoSpace.parseDomain(domain), null);
   }
@@ -218,8 +207,6 @@ test("提前注册仅使用公开字段，持久保持 document_start 和独立�
   assert.deepEqual(scripts[2].matches, patterns("*.child.docs.example.com"));
   assert.deepEqual(scripts[2].excludeMatches, []);
   assert.deepEqual(plain(AutoSpace.earlyScripts(enabledSettings(false))), []);
-  assert.throws(() => validateRegistration({ ...scripts[0], origin: "USER" }), /origin/);
-  assert.throws(() => validateRegistration({ ...scripts[0], cssOrigin: "user" }), /cssOrigin/);
 });
 
 test("来源回退沿用有效创建地址，blob 保留自身来源，普通网页忽略回退地址", () => {

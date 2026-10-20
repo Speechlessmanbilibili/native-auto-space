@@ -15,7 +15,7 @@ before(async () => {
   server = http.createServer((request, response) => {
     const name = request.url.slice(1).split("?")[0];
     response.setHeader("Content-Type", name.endsWith(".js") ? "text/javascript" : name.endsWith(".css") ? "text/css" : name.endsWith(".svg") ? "image/svg+xml" : "text/html; charset=utf-8");
-    if (["options.html", "popup.html", "shared.js", "ui.js", "ui.css", "kit/kit.css", "kit/kit.js", "icons/source.svg", "icons/mark.svg"].includes(name)) response.end(fs.readFileSync(path.join(root, name)));
+    if (["options.html", "popup.html", "shared.js", "ui.js", "ui.css", "kit/kit.css", "icons/source.svg", "icons/mark.svg"].includes(name)) response.end(fs.readFileSync(path.join(root, name)));
     else response.end(fixture);
   });
   await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
@@ -24,24 +24,6 @@ before(async () => {
 });
 after(async () => { await browser?.close(); if (server) await new Promise(resolve => server.close(resolve)); });
 
-test("默认全局开启，站点三态、子域名、端口及同等规则顺序正确", () => {
-  assert.equal(normalize(null).enabled, true);
-  assert.equal(normalize({ enabled: false }).enabled, false);
-  const settings = normalize({ enabled: false, siteRules: [
-    { domain: "example.com", mode: "on" }, { domain: "docs.example.com", mode: "off" },
-    { domain: "docs.example.com:443", mode: "inherit" }, { domain: "docs.example.com:443", mode: "on" }
-  ] });
-  assert.equal(resolve(settings, "https://other.example.com").enabled, true);
-  assert.equal(resolve(settings, "https://docs.example.com").enabled, false);
-  assert.equal(resolve(settings, "http://docs.example.com").rule.mode, "off");
-  assert.equal(resolve(settings, "https://notexample.com").rule, null);
-  assert.equal(parseDomain("https://EXAMPLE.com:443/path").domain, "example.com:443");
-  assert.equal(parseDomain("[::1]:80").domain, "[::1]:80");
-  assert.equal(parseDomain("例子.中国").host, "xn--fsqu00a.xn--fiqs8s");
-  for (const domain of ["", "bad domain", "https://a@b", "ftp://example.com", "example.com:65536", "*", "foo*.example.com", "**.example.com"]) assert.equal(parseDomain(domain), null);
-  assert.equal(parseDomain("*.example.com").domain, "example.com");
-});
-
 async function uiPage(name, stored = {}, currentURL = "https://docs.example.com/page") {
   const page = await browser.newPage();
   await page.addInitScript(({ stored, currentURL }) => {
@@ -49,7 +31,7 @@ async function uiPage(name, stored = {}, currentURL = "https://docs.example.com/
     window.chrome = {
       storage: { local: { get: async () => ({ settings: __stored }), set: async value => { __stored = value.settings; } } },
       tabs: { query: async () => [{ url: currentURL }] },
-      runtime: { openOptionsPage: () => { window.__opened = true; } }
+      runtime: { sendMessage: async () => ({ ok: true }), openOptionsPage: () => { window.__opened = true; } }
     };
   }, { stored, currentURL });
   await page.goto(origin + "/" + name);

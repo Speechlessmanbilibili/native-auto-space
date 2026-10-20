@@ -8,12 +8,11 @@
     $("#status").dataset.state = state;
   };
   const read = async () => normalize((await chrome.storage.local.get("settings")).settings);
-  const write = async value => {
-    await chrome.storage.local.set({ settings: value }); settings = value;
-    if (typeof chrome.runtime.sendMessage === "function") {
-      const result = await chrome.runtime.sendMessage({ type: "auto-space-registration-sync" });
-      if (result?.error) throw new Error(result.error);
-    }
+  const write = async change => {
+    settings = await AutoSpace.writeSettings(chrome.storage.local, change);
+    const result = await chrome.runtime.sendMessage({ type: "auto-space-registration-sync" });
+    if (result?.error) throw new Error(result.error);
+    return settings;
   };
   $("#unsupported").hidden = CSS.supports("text-autospace", "normal");
 
@@ -80,8 +79,8 @@
       $("#save").setAttribute("aria-busy", "true");
       status("正在保存……", "saving");
       try {
-        const merged = AutoSpace.mergeDraft(JSON.parse(saved), value, await read());
-        await write(merged);
+        const baseline = JSON.parse(saved);
+        const merged = await write(latest => AutoSpace.mergeDraft(baseline, value, latest));
         const current = formSettings();
         const rebased = AutoSpace.mergeDraft(JSON.parse(draft), current, merged);
         $("#enabled").checked = rebased.enabled;
@@ -107,7 +106,7 @@
   async function savePopup(change) {
     $("#enabled").disabled = true;
     $("#site-mode").disabled = true;
-    try { await write(change(await read())); status("已保存", "success"); } catch { status("保存失败，请重试。", "error"); }
+    try { await write(change); status("已保存", "success"); } catch { status("保存失败，请重试。", "error"); }
     finally {
       $("#enabled").disabled = false;
       $("#site-mode").disabled = !url?.hostname;

@@ -101,5 +101,14 @@
     });
     return result;
   }
-  globalThis.AutoSpace = { mergeDraft, CSS, MODES, parseDomain, normalize, resolve, sourceAddress, earlyScripts };
+  // 所有设置页面共用一把锁，读取、合并与发布在同一次写入中完成。
+  function writeSettings(storage, change) {
+    return navigator.locks.request("auto-space-settings-write", async () => {
+      const latest = normalize((await storage.get("settings")).settings);
+      const value = change(latest);
+      await storage.set({ settings: value });
+      return value;
+    });
+  }
+  globalThis.AutoSpace = { writeSettings, mergeDraft, CSS, MODES, parseDomain, normalize, resolve, sourceAddress, earlyScripts };
 })();
