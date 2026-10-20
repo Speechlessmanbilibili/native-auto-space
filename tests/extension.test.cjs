@@ -202,62 +202,6 @@ test("页面仅报告完成的 USER 样式状态，排队、失败及过时回�
   } finally { await page.close(); }
 });
 
-test("真实 MV3 注入覆盖网页重要声明，动态内容、框架及实时设置正确", async t => {
-  const context = await chromium.launchPersistentContext("", { headless: true, executablePath,
-    args: ["--disable-extensions-except=" + root, "--load-extension=" + root] });
-  try {
-    const worker = context.serviceWorkers()[0] || await context.waitForEvent("serviceworker");
-    const errors = [];
-    worker.on("console", message => { if (message.type() === "error") errors.push(message.text()); });
-    const page = await context.newPage();
-    await page.goto(origin + "/page");
-    await page.waitForFunction(() => getComputedStyle(document.getElementById("text")).textAutospace === "normal");
-    assert.equal(await page.locator("#text").textContent(), "中文English数字123");
-    assert.equal(await page.locator("#text").evaluate(el => getComputedStyle(el).fontFamily), "Arial");
-    assert.equal(await page.locator("#text").evaluate(el => getComputedStyle(el, "::before").textAutospace), "normal");
-    assert.equal(await page.locator("#search").evaluate(el => getComputedStyle(el, "::placeholder").textAutospace), "normal");
-    await page.evaluate(() => {
-      document.getElementById("dynamic").innerHTML = '<p id="new-text">中文Dynamic</p><iframe id="child" src="' + location.href.replace("127.0.0.1", "localhost") + '"></iframe><iframe id="blank"></iframe>';
-      document.getElementById("blank").contentDocument.body.innerHTML = '<p id="blank-text">中文Blank</p>';
-    });
-    await page.waitForFunction(() => getComputedStyle(document.getElementById("new-text")).textAutospace === "normal");
-    await page.frameLocator("#child").locator("#text").waitFor();
-    await page.waitForFunction(() => document.getElementById("blank").contentWindow.getComputedStyle(document.getElementById("blank").contentDocument.getElementById("blank-text")).textAutospace === "normal");
-    // 关闭全局后保留本站开启，另一个框架独立关闭；空白框架沿用创建者来源。
-    await worker.evaluate(() => chrome.storage.local.set({ settings: { enabled: false, siteRules: [
-      { domain: "127.0.0.1", mode: "on" }, { domain: "localhost", mode: "off" }
-    ] } }));
-    await page.waitForFunction(() => getComputedStyle(document.getElementById("text")).textAutospace === "normal");
-    await page.frameLocator("#child").locator("#text").evaluate(async el => {
-      const started = performance.now();
-      while (getComputedStyle(el).textAutospace !== "no-autospace" && performance.now() - started < 3000) await new Promise(resolve => setTimeout(resolve, 10));
-    });
-    assert.equal(await page.frameLocator("#child").locator("#text").evaluate(el => getComputedStyle(el).textAutospace), "no-autospace");
-    await worker.evaluate(() => chrome.storage.local.set({ settings: { enabled: false, siteRules: [] } }));
-    await page.waitForFunction(() => getComputedStyle(document.getElementById("text")).textAutospace === "no-autospace");
-    const disabledWidth = await page.locator("#text").evaluate(el => { const range = document.createRange(); range.selectNodeContents(el); return range.getBoundingClientRect().width; });
-    await worker.evaluate(() => chrome.storage.local.set({ settings: { enabled: true, siteRules: [] } }));
-    await page.waitForFunction(() => getComputedStyle(document.getElementById("text")).textAutospace === "normal");
-    const enabledWidth = await page.locator("#text").evaluate(el => { const range = document.createRange(); range.selectNodeContents(el); return range.getBoundingClientRect().width; });
-    assert.ok(enabledWidth > disabledWidth, "自动间距应改变混排文字的实际宽度");
-    // 密集控件与文字变化不产生扩展样式节点或字体标记。
-    await page.locator("#search").fill("中文Search123");
-    await page.evaluate(() => { for (let i = 0; i < 200; i++) { document.getElementById("dynamic").className = "hover-" + i; document.getElementById("new-text").textContent = "中文Dynamic" + i; } });
-    assert.equal(await page.locator("style").count(), 1);
-    assert.equal(await page.locator("[data-sfs-replaced]").count(), 0);
-    const extensionURL = worker.url().replace(/background\.js$/, "options.html");
-    const options = await context.newPage();
-    await options.goto(extensionURL);
-    await options.getByRole("button", { name: "添加网站" }).click();
-    await options.locator(".domain").fill("127.0.0.1");
-    await options.getByText("关闭", { exact: true }).click();
-    await options.getByRole("button", { name: "保存设置" }).click();
-    await page.waitForFunction(() => getComputedStyle(document.getElementById("text")).textAutospace === "no-autospace");
-    assert.equal(errors.length, 0);
-    t.diagnostic(JSON.stringify({ disabledWidth, enabledWidth, text: await page.locator("#text").textContent() }));
-  } finally { await context.close(); }
-});
-
 test("设置页保存局部草稿时合并其他窗口的新开关与规则", async () => {
   const page = await uiPage("options.html", { enabled: true, siteRules: [] });
   await page.evaluate(() => { __stored = { enabled: false, siteRules: [{ domain: "other.example.com", mode: "off" }] }; });

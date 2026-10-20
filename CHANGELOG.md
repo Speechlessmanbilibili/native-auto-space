@@ -2,6 +2,10 @@
 
 根据 Git 提交、版本标签及 GitHub Release 记录整理。版本标题链接到对应 Release，日期采用首次发布时的北京时间；同版本安装包的后续更新另行标注日期。
 
+## [v1.3.3](https://github.com/Speechlessmanbilibili/native-auto-space/releases/tag/v1.3.3)（2026-10-20）
+
+- 站点匹配与提前样式注册复用已解析的域名和端口，减少重复配置处理。
+
 ## [v1.3.2](https://github.com/Speechlessmanbilibili/native-auto-space/releases/tag/v1.3.2)（2026-10-20）
 
 - 设置页与弹窗共用原生写入锁，交错保存时保留独立修改。

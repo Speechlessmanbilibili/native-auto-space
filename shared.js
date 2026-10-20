@@ -3,6 +3,8 @@
   "use strict";
   const CSS = "*, ::before, ::after, ::placeholder { text-autospace: normal !important; }";
   const MODES = ["inherit", "on", "off"];
+  const WORK = Symbol("站点工作配置");
+  const working = value => value?.[WORK] ? value : normalize(value);
   function parseDomain(value) {
     const text = String(value ?? "").trim();
     if (!text || /\s/.test(text)) return null;
@@ -22,19 +24,23 @@
   }
   function normalize(value = {}) {
     if (!value || typeof value !== "object") value = {};
-    return { enabled: value.enabled !== false, siteRules: Array.isArray(value.siteRules) ? value.siteRules
-      .filter(rule => parseDomain(rule?.domain) && MODES.includes(rule.mode))
-      .map(rule => ({ domain: parseDomain(rule.domain).domain, mode: rule.mode })) : [] };
+    const result = { enabled: value.enabled !== false, siteRules: Array.isArray(value.siteRules) ? value.siteRules.flatMap(rule => {
+      const domain = parseDomain(rule?.domain);
+      if (!domain || !MODES.includes(rule.mode)) return [];
+      return [Object.defineProperty({ domain: domain.domain, mode: rule.mode }, WORK, { value: domain })];
+    }) : [] };
+    return Object.defineProperty(result, WORK, { value: true });
   }
   function resolve(settings, address) {
+    settings = working(settings);
     let url;
     try { url = new URL(address); } catch { return { enabled: settings.enabled, rule: null }; }
     const host = url.hostname.toLowerCase().replace(/\.$/, "");
     const port = url.port || (url.protocol === "https:" ? "443" : url.protocol === "http:" ? "80" : "");
     let rule = null, score = -1;
     for (const candidate of settings.siteRules) {
-      const domain = parseDomain(candidate.domain);
-      if (!domain || !(host === domain.host || host.endsWith("." + domain.host))) continue;
+      const domain = candidate[WORK];
+      if (!(host === domain.host || host.endsWith("." + domain.host))) continue;
       if (domain.port !== null && domain.port !== port) continue;
       const rank = domain.host.length * 2 + (domain.port === null ? 0 : 1);
       if (rank > score) { score = rank; rule = candidate; }
@@ -55,9 +61,9 @@
   }
   // 每条规则生成独立的开启区域，排除更具体规则，保持端口与顺序优先级。
   function earlyScripts(value) {
-    const settings = normalize(value), seen = new Set();
+    const settings = working(value), seen = new Set();
     const rules = settings.siteRules.map((rule, order) => {
-      const domain = parseDomain(rule.domain);
+      const domain = rule[WORK];
       return { ...domain, order, enabled: rule.mode === "inherit" ? settings.enabled : rule.mode === "on", rank: domain.host.length * 2 + Number(domain.port !== null) };
     }).filter(rule => { const key = rule.host + ":" + rule.port; if (seen.has(key)) return false; seen.add(key); return true; });
     const patterns = rule => {
