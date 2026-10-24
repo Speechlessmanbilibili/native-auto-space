@@ -1,6 +1,6 @@
 {
   "name": "native-auto-space",
-  "version": "1.3.3",
+  "version": "1.3.4",
   "private": true,
   "scripts": {
     "test": "node --test tests/background.test.cjs tests/extension.test.cjs tests/early.test.cjs",
