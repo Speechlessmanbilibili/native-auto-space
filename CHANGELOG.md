@@ -2,6 +2,12 @@
 
 根据 Git 提交、版本标签及 GitHub Release 记录整理。版本标题链接到对应 Release，日期采用首次发布时的北京时间；同版本安装包的后续更新另行标注日期。
 
+## [v1.3.5](https://github.com/Speechlessmanbilibili/native-auto-space/releases/tag/v1.3.5)（2026-10-28）
+
+- 启用新的扩展公钥与 ID：`dlndlmhceeebhebhcdmdnceagejkkejb`，后续版本沿用此身份。
+- 本版作为新扩展安装，配置需重新填写；安装前停用旧版，配置完成后刷新网页。
+- README 补充独立私有密钥仓库 `font-extension-signing-keys` 的说明与链接。
+
 ## [v1.3.4](https://github.com/Speechlessmanbilibili/native-auto-space/releases/tag/v1.3.4)（2026-10-24）
 
 - 统一源码、配置与文档的 LF 换行，通过 `.gitattributes` 和 `.editorconfig` 固定 Git 检出与编辑器保存格式。
