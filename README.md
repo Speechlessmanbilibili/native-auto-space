@@ -35,8 +35,9 @@
 ## 安装与开始使用
 
 1. 从 [最新 Release](https://github.com/Speechlessmanbilibili/native-auto-space/releases/latest) 下载 `native-auto-space-v<VERSION>.zip`。
-2. 打开 `edge://extensions/` 或 `chrome://extensions/`，开启开发者模式，将 ZIP 拖入扩展管理页。
-3. 打开普通网页，点击工具栏中的扩展图标，即可查看当前网站的间距状态。
+2. 打开扩展管理页（Edge：`edge://extensions/`；Chrome：`chrome://extensions/`），开启 **开发者模式**。
+3. 将下载的 ZIP 拖入扩展管理页完成安装。
+4. 打开普通网页，点击工具栏中的扩展图标，即可查看当前网站的间距状态。
 
 “管理所有网站设置”打开完整设置页。可以在那里对照效果、编辑网站规则并保存。
 
